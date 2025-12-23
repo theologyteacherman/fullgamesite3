@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jacobs Games Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/webp" href="favicon.webp" />
+  <style>
+
+
+
+
+/* CURSOR (known-good): cat cursor everywhere, including clickable elements */
+html, body {
+  cursor: url("cat_cursor.png") 16 16, auto;
+}
+a, button, .card, .card * {
+  cursor: url("cat_cursor.png") 16 16, pointer;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: radial-gradient(1200px 600px at top, #0b1533 0%, #050b1a 40%, #020617 100%);
+  color: #e8ecf4;
+}
+
+a { text-decoration: none; color: inherit; }
+
+header {
+  max-width: 1100px;
+  margin: 40px auto 30px;
+  padding: 20px 26px;
+  background: #fff;
+  color: #111;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.35);
+}
+
+header img { width: 56px; height: 56px; }
+
+main {
+  max-width: 1100px;
+  margin: 0 auto 80px;
+  padding: 0 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  background: linear-gradient(180deg, #0b1533, #070e24);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.45);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 45px rgba(0,0,0,.6);
+}
+
+.badge { font-size: 22px; margin-bottom: 8px; }
+.card h3 { margin: 0 0 6px; font-size: 16px; }
+.card span { font-size: 12px; color: #9aa4c7; }
+
+footer {
+  margin-top: 60px;
+  text-align: center;
+  font-size: 13px;
+  color: #9aa4c7;
+}
+
+  </style>
+</head>
+<body>
+<nav>
+    <div class="title">The Jacobs Theology Show</div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="listen.html">Listen</a></li>
+      <li><a href="episodes.html">Episodes</a></li>
+      <li><a href="tools.html">Tools</a></li>
+      <li><a href="games.html">Games</a>
+  <a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+
+<header>
+  <img src="cat.webp" alt="Biblical Catective Cat">
+  <div>
+    <h1>Jacobs Games Hub</h1>
+    <p>Tap a card to play</p>
+  </div>
+</header>
+
+<main>
+<section class="grid">
+
+<a class="card" href="THE SCIENCE-THEOLOGY GAME.html">
+  <div class="badge">🧪⛪</div>
+  <h3>Science vs Theology</h3>
+</a>
+
+<a class="card" href="THE MODALITY GAME.html">
+  <div class="badge">🎯</div>
+  <h3>Modality Platformer</h3>
+</a>
+
+<a class="card" href="familytreegame11.html">
+  <div class="badge">🌳🐿️</div>
+  <h3>Roots of Reason</h3>
+</a>
+
+<a class="card" href="THE BIBLE ORDER GAME.html">
+  <div class="badge">📚</div>
+  <h3>Bible Books — Order Trainer</h3>
+</a>
+
+<a class="card" href="THE SALVATION HISTORY GAME.html">
+  <div class="badge">🕊️</div>
+  <h3>Salvation History Order Game</h3>
+</a>
+
+<a class="card" href="THE LITERARY TOOL GAME.html">
+  <div class="badge">🧰</div>
+  <h3>Match the Literary Tools</h3>
+</a>
+
+<a class="card" href="genesis1-pattern-game.html">
+  <div class="badge">🗓️</div>
+  <h3>Genesis 1 Sequence Game</h3>
+</a>
+
+<a class="card" href="creation-days-game.html">
+  <div class="badge">🌱</div>
+  <h3>Creation Days Matching Game</h3>
+</a>
+
+<a class="card" href="index%20(31).html">
+  <div class="badge">🐉⚔️</div>
+  <h3>Chaos vs Creation</h3>
+</a>
+
+<a class="card" href="the fall of the angels2.html">
+  <div class="badge">⚔️😇</div>
+  <h3>Fall of the Angels</h3>
+</a>
+
+<a class="card" href="whythetreegame1.html">
+  <div class="badge">⚖️</div>
+  <h3>The Definition</h3>
+</a>
+
+
+
+<a class="card" href="thelightgame3.html">
+  <div class="badge">👣💡</div>
+  <h3>Walking in the Light</h3>
+</a>
+
+<a class="card" href="icarus%20game6.html">
+  <div class="badge">⚠️🪽</div>
+  <h3>The Presumption</h3>
+</a>
+
+<a class="card" href="Hallmarks2.html">
+  <div class="badge">🗺️</div>
+  <h3>NDA Hallmarks Adventure Game</h3>
+</a>
+
+</section>
+</main>
+
+<footer>
+© 2025 Jacobs Games · Deployed via GitHub Pages
+</footer>
+
+
+</body>
+</html>
