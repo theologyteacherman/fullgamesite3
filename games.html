@@ -28,6 +28,41 @@
       font-size: 1.8rem;
     }
 
+    .games-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.55rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      background: rgba(255, 255, 255, 0.6);
+      color: rgba(15, 23, 42, 0.9);
+      text-decoration: none;
+      font-weight: 700;
+      line-height: 1;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .back-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.85);
+      border-color: rgba(15, 23, 42, 0.28);
+    }
+
+    .back-btn:active {
+      transform: translateY(0px);
+    }
+
+
     .fullscreen-btn {
       background: #1e293b;
       color: #fff;
@@ -73,7 +108,10 @@
 
   <main class="games-wrapper">
     <div class="games-header">
-      <h1>Jacobs Games Hub</h1>
+      <div class="games-header-left">
+        <a class="back-btn" href="index.html" title="Back to the main site">← Back</a>
+        <h1>Jacobs Games Hub</h1>
+      </div>
       <button class="fullscreen-btn" onclick="goFullscreen()">Go Full Screen</button>
     </div>
 
