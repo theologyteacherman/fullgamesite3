@@ -29,16 +29,65 @@
       align-items:center;
     }
 
+    /* --- Start Screen Styles --- */
+    .start-screen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #fff0e8, #fff7f4);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transition: opacity 0.4s ease, visibility 0.4s;
+    }
+    .start-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .start-screen h1 {
+      font-size: clamp(32px, 5vw, 60px);
+      margin-bottom: 20px;
+      color: var(--accent);
+    }
+    .start-btn {
+      font-size: 1.25rem;
+      padding: 16px 32px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(155,77,202,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(155,77,202,0.4);
+    }
+    .start-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* --- Game Styles --- */
     .wrap{
       width: min(1100px, 96vw);
       padding: clamp(16px, 3vw, 28px);
+      opacity: 0; /* Hidden initially until game starts */
+      transition: opacity 0.5s ease 0.2s;
+    }
+    .wrap.visible {
+      opacity: 1;
     }
 
     header{
       text-align:center;
       margin-bottom: clamp(10px, 2vw, 14px);
     }
-    h1{
+    h1.game-title{
       font-size: clamp(24px, 3.2vw + 8px, 40px);
       margin: 4px 0 8px;
       letter-spacing:.2px;
@@ -187,13 +236,21 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
+
+  <div id="startScreen" class="start-screen">
+    <h1>Match the Literary Tools</h1>
+    <p style="margin-bottom: 30px; font-size: 1.1rem; color: #555;">Click start to begin the lesson and play music.</p>
+    <button id="startBtn" class="start-btn">Start Game ♫</button>
+  </div>
+
+  <div class="wrap" id="gameWrap">
     <header>
-      <h1>Match the Literary Tools</h1>
+      <h1 class="game-title">Match the Literary Tools</h1>
       <p class="sub">Drag or tap to place each term with its definition.</p>
     </header>
 
     <div class="ui">
+      <button id="musicToggle">Pause Music</button>
       <button id="reshuffle">Shuffle Word Bank</button>
       <button id="reset">Reset</button>
       <span class="chip" id="progress">0 / 3 correct</span>
@@ -214,9 +271,51 @@
   </div>
 
   <div class="confetti" id="confetti"></div>
+  
+  <audio id="bgm" loop>
+    <source src="Classical_Haze_2025-12-23T141829.mp3" type="audio/mpeg">
+  </audio>
 
   <script>
   (function(){
+    // --- Audio & Start Screen Logic ---
+    const startScreen = document.getElementById('startScreen');
+    const startBtn = document.getElementById('startBtn');
+    const gameWrap = document.getElementById('gameWrap');
+    const bgm = document.getElementById('bgm');
+    const musicToggle = document.getElementById('musicToggle');
+    let isPlaying = false;
+
+    // The user MUST interact with the document first to allow audio
+    startBtn.addEventListener('click', () => {
+      // Hide start screen
+      startScreen.classList.add('hidden');
+      // Show game
+      gameWrap.classList.add('visible');
+      // Play Audio
+      bgm.play().then(() => {
+        isPlaying = true;
+        musicToggle.textContent = "Pause Music";
+      }).catch(err => {
+        console.warn("Audio blocked:", err);
+        musicToggle.textContent = "Play Music";
+      });
+    });
+
+    // Toggle button logic
+    musicToggle.addEventListener('click', () => {
+      if(isPlaying){
+        bgm.pause();
+        musicToggle.textContent = "Play Music";
+      } else {
+        bgm.play();
+        musicToggle.textContent = "Pause Music";
+      }
+      isPlaying = !isPlaying;
+    });
+
+
+    // --- Game Logic ---
     const DEFINITIONS = [
       {
         key: "Historical Criticism",

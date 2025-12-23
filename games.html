@@ -1,140 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Games | The Jacobs Theology Show</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>Jacobs Games Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/webp" href="favicon.webp">
 
-  <!-- Main site stylesheet -->
-  <link rel="stylesheet" href="style.css">
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #05060b;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
-  <style>
-    /* Games page specific tweaks */
-    .games-wrapper {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem 1rem 4rem;
-    }
+#game-frame {
+    width: 100vw;
+    height: 100vh;
+    border: none;
+}
 
-    .games-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
+#back-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 1000;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(20, 25, 45, 0.85);
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    backdrop-filter: blur(6px);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
 
-    .games-header h1 {
-      margin: 0;
-      font-size: 1.8rem;
-    }
-
-    .games-header-left {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      min-width: 0;
-    }
-
-    .back-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.55rem 0.9rem;
-      border-radius: 999px;
-      border: 1px solid rgba(15, 23, 42, 0.18);
-      background: rgba(255, 255, 255, 0.6);
-      color: rgba(15, 23, 42, 0.9);
-      text-decoration: none;
-      font-weight: 700;
-      line-height: 1;
-      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
-      white-space: nowrap;
-      user-select: none;
-    }
-
-    .back-btn:hover {
-      transform: translateY(-1px);
-      background: rgba(255, 255, 255, 0.85);
-      border-color: rgba(15, 23, 42, 0.28);
-    }
-
-    .back-btn:active {
-      transform: translateY(0px);
-    }
-
-
-    .fullscreen-btn {
-      background: #1e293b;
-      color: #fff;
-      border: none;
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.95rem;
-    }
-
-    .fullscreen-btn:hover {
-      background: #334155;
-    }
-
-    .games-frame-container {
-      position: relative;
-      width: 100%;
-      height: 80vh;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    }
-
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
-    /* Fullscreen mode */
-    .games-frame-container:fullscreen,
-    .games-frame-container:-webkit-full-screen {
-      width: 100vw;
-      height: 100vh;
-      border-radius: 0;
-    }
-  </style>
+#back-btn:hover {
+    background: rgba(40, 55, 95, 0.95);
+    transform: translateY(-1px);
+}
+</style>
 </head>
 
 <body>
 
-  <!-- Your normal site header/nav should already be here via style.css -->
+<a id="back-btn" href="index.html">← Back to The Jacobs Theology Show</a>
 
-  <main class="games-wrapper">
-    <div class="games-header">
-      <div class="games-header-left">
-        <a class="back-btn" href="index.html" title="Back to the main site">← Back</a>
-        <h1>Jacobs Games Hub</h1>
-      </div>
-      <button class="fullscreen-btn" onclick="goFullscreen()">Go Full Screen</button>
-    </div>
-
-    <div id="gameContainer" class="games-frame-container">
-      <iframe
-        src="Jacobs_Games_Hub_INDEX_LOCKED_CANONICAL_WITH_LIGHT_EMOJI_DEFINITION.html"
-        allowfullscreen
-      ></iframe>
-    </div>
-  </main>
-
-  <script>
-    function goFullscreen() {
-      const el = document.getElementById('gameContainer');
-      if (el.requestFullscreen) {
-        el.requestFullscreen();
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-      } else if (el.msRequestFullscreen) {
-        el.msRequestFullscreen();
-      }
-    }
-  </script>
+<iframe 
+    id="game-frame" 
+    src="Jacobs_Games_Hub_INDEX_LOCKED_CANONICAL_WITH_LIGHT_EMOJI_DEFINITION.html"
+    allowfullscreen>
+</iframe>
 
 </body>
 </html>
