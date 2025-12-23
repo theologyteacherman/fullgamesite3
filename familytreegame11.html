@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roots of Reason: Final Polish</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --bg-color: #121212; --accent-gold: #d4af37; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Lato', sans-serif; }
+        
+        /* --- FULL SCREEN VIDEO LAYER --- */
+        #ending-video {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; 
+            z-index: 1; 
+            display: none; 
+        }
+
+        #game-container {
+            position: relative; aspect-ratio: 1000/667; width: min(1000px, 95vw); height: auto;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9); border: 4px solid #333; background: #000;
+            z-index: 10; overflow: hidden;
+            transition: all 0.5s ease;
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 0.5s; }
+        #top-bar { display: flex; justify-content: space-between; padding: 15px 30px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
+        .hud { color: #fff; font-size: 1.4rem; font-family: 'Cinzel', serif; text-shadow: 0 2px 4px #000; }
+        .accent { color: var(--accent-gold); }
+        #mute-btn { pointer-events: auto; cursor: pointer; font-size: 1.5rem; }
+
+        /* --- SIDE PANEL HUD --- */
+        #side-panel {
+            position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+            width: 300px; background: rgba(18, 18, 18, 0.95);
+            border: 2px solid var(--accent-gold); border-radius: 8px; padding: 25px; text-align: center;
+            box-shadow: 0 0 40px rgba(0,0,0,0.9); opacity: 0; transition: opacity 0.5s, transform 0.5s;
+            pointer-events: none; z-index: 50;
+        }
+        #side-panel.visible { opacity: 1; transform: translateY(-50%) translateX(0); }
+        #side-panel h2 { font-family: 'Cinzel', serif; color: var(--accent-gold); margin: 0 0 20px 0; font-size: 1.4rem; border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 15px; letter-spacing: 2px; }
+        #side-panel p { font-family: 'Lato', sans-serif; color: #fff; font-size: 1.25rem; line-height: 1.6; margin: 0; font-weight: 700; }
+
+        /* --- OVERLAYS --- */
+        .overlay {
+            position: absolute; top:0; left:0; width:100%; height:100%; 
+            background: url('title.jpg') no-repeat center center;
+            background-size: cover; 
+            display: flex; flex-direction: column; 
+            justify-content: flex-end; 
+            align-items: center; 
+            padding-bottom: 40px; 
+            z-index: 100; transition: opacity 0.8s ease; 
+            pointer-events: auto;
+        }
+        .overlay.hidden { opacity: 0; pointer-events: none; }
+        
+        /* Win Screen Styles */
+        .overlay.win-screen {
+            background: rgba(0, 0, 0, 0); 
+            justify-content: center; 
+            padding-bottom: 0;
+            backdrop-filter: none;
+        }
+        
+        /* HIDE Start Text (Image has it) */
+        #title-text, #subtitle-text { display: none; }
+
+        /* SHOW Win Text */
+        .overlay.win-screen #title-text { display: block; font-family: 'Cinzel', serif; font-weight: 900; font-size: 5rem; color: #fff; margin: 0; text-shadow: 0 5px 25px rgba(0,0,0,1); margin-bottom: 20px; }
+        .overlay.win-screen #subtitle-text { display: block; color: #fff; letter-spacing: 5px; margin-bottom: 30px; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,1); font-size: 1.5rem; font-weight: bold; }
+
+        /* --- THE COVER-UP PANEL --- */
+        /* This box is solid black to hide the fuzzy text/button in the image */
+        .card-panel { 
+            background: #000; /* SOLID BLACK to block image behind it */
+            padding: 20px 40px; 
+            border: 2px solid var(--accent-gold); 
+            border-radius: 8px; 
+            max-width: 600px; 
+            text-align: center; 
+            box-shadow: 0 0 50px rgba(0,0,0,1);
+            
+            /* Position */
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .overlay.win-screen .card-panel { display: none; }
+
+        .card-panel p { color: #eee; font-size: 1.0rem; margin: 2px 0; line-height: 1.4; }
+        b { color: var(--accent-gold); }
+        
+        /* Button inside the panel */
+        .card-panel button {
+            background: transparent; 
+            color: var(--accent-gold); 
+            font-family: 'Cinzel', serif; 
+            font-size: 1.4rem; font-weight: 900;
+            padding: 10px 30px; 
+            border: 2px solid var(--accent-gold); 
+            cursor: pointer; 
+            transition: all 0.3s;
+            text-transform: uppercase; 
+            letter-spacing: 3px; 
+            margin-top: 10px;
+            animation: pulseBtn 2s infinite;
+        }
+        .card-panel button:hover { background: var(--accent-gold); color: #000; box-shadow: 0 0 30px rgba(212, 175, 55, 0.5); transform: scale(1.05); animation: none; }
+
+        /* Replay Button (Win Screen) needs its own style since it's not in the panel */
+        #replay-btn {
+            background: rgba(0,0,0,0.8); 
+            color: var(--accent-gold); 
+            font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700;
+            padding: 15px 50px; 
+            border: 2px solid var(--accent-gold); 
+            cursor: pointer; 
+            text-transform: uppercase; letter-spacing: 3px;
+            display: none; /* Hidden on start, shown on win */
+        }
+        .overlay.win-screen #replay-btn { display: block; }
+        #replay-btn:hover { background: var(--accent-gold); color: #000; }
+
+        @keyframes pulseBtn { 0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); } 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); } }
+        
+        #win-avatar { font-size: 6rem; display: none; margin-bottom: 20px; filter: drop-shadow(0 0 10px gold); animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-15px);} }
+    </style>
+</head>
+<body>
+
+<video id="ending-video" loop playsinline>
+    <source src="Squirrel_Animation_Enhanced.mp4" type="video/mp4">
+</video>
+
+<div id="side-panel">
+    <h2 id="panel-title">ACTIVE CLUE</h2>
+    <p id="panel-text">Definition text...</p>
+</div>
+
+<div id="game-container">
+    <canvas id="bgCanvas" style="position:absolute; z-index:1;"></canvas>
+    <canvas id="gameCanvas" style="position:absolute; z-index:2;"></canvas>
+    <canvas id="fxCanvas" style="position:absolute; z-index:3; pointer-events:none;"></canvas>
+
+    <div id="ui-layer" style="z-index: 4;">
+        <div id="top-bar">
+            <div class="hud">Score <span class="accent" id="ui-score">0</span></div>
+            <div class="hud" id="mute-btn" onclick="toggleAudio()">🔊</div>
+            <div class="hud">Card <span class="accent" id="ui-progress">1/12</span></div>
+        </div>
+    </div>
+
+    <div id="overlay" class="overlay">
+        <div id="win-avatar">🐿️</div>
+        <h1 id="title-text">CURRICULUM COMPLETE</h1>
+        <div class="subtitle" id="subtitle-text">Final Score: 0</div>
+        
+        <div class="card-panel">
+            <p>You are the <b>Guardian Squirrel</b>.</p>
+            <p>1. <b>Arrows/WASD</b> to move.</p>
+            <p>2. Pick up definitions from the <b>Stack</b>.</p>
+            <p>3. Walk to the <b>Glowing Ring</b> and press <b>SPACE</b>.</p>
+            <p style="font-size: 0.8em; color: #888; margin-bottom: 5px;">* Click card to Zoom | Look Right for Clues *</p>
+            <button onclick="startGame()">Begin Journey</button>
+        </div>
+
+        <button id="replay-btn" onclick="location.reload()">Replay</button>
+    </div>
+</div>
+
+<script>
+    const GAME_W = 1000;
+    const GAME_H = 667;
+    
+    const ZONES = {
+        "philosophy": { "x": 0.5, "y": 0.68, "color": "#f1c40f", "r": 55 },
+        "theology": { "x": 0.38, "y": 0.24, "color": "#e67e22", "r": 43 },
+        "jewish": { "x": 0.07, "y": 0.34, "color": "#d35400", "r": 26 },
+        "hindu": { "x": 0.17, "y": 0.45, "color": "#d35400", "r": 22 },
+        "buddhist": { "x": 0.29, "y": 0.44, "color": "#d35400", "r": 27 },
+        "islamic": { "x": 0.4, "y": 0.46, "color": "#d35400", "r": 30.5 },
+        "christian": { "x": 0.23, "y": 0.66, "color": "#e74c3c", "r": 47 },
+        "catholic": { "x": 0.13, "y": 0.87, "color": "#c0392b", "r": 22.5 },
+        "protestant": { "x": 0.2, "y": 0.9, "color": "#c0392b", "r": 22.5 },
+        "eastern": { "x": 0.27, "y": 0.88, "color": "#c0392b", "r": 24.5 },
+        "coptic": { "x": 0.34, "y": 0.87, "color": "#c0392b", "r": 23 },
+        "science": { "x": 0.59, "y": 0.25, "color": "#3498db", "r": 39.5 },
+        "social": { "x": 0.66, "y": 0.39, "color": "#2980b9", "r": 38.5 },
+        "hard": { "x": 0.88, "y": 0.4, "color": "#8e44ad", "r": 38 },
+        "religious_studies": { "x": 0.61, "y": 0.59, "color": "#1abc9c", "r": 26.5 },
+        "psychology": { "x": 0.73, "y": 0.6, "color": "#1abc9c", "r": 27.5 },
+        "sociology": { "x": 0.67, "y": 0.69, "color": "#16a085", "r": 27 },
+        "biology": { "x": 0.82, "y": 0.59, "color": "#9b59b6", "r": 26 },
+        "physics": { "x": 0.95, "y": 0.59, "color": "#8e44ad", "r": 24.5 },
+        "chemistry": { "x": 0.89, "y": 0.69, "color": "#9b59b6", "r": 28 }
+    };
+
+    const rawDeck = [
+        { type: "philosophy", text: "The general method of giving reasons for beliefs." },
+        { type: "theology", text: "The method of giving reasons for beliefs (doing philosophy) within a supernatural worldview. Uses natural evidence AND Divine Revelation as valid evidence." },
+        { type: "jewish", text: "A theology (religion) that uses the Tanakh as Divine Revelation." },
+        { type: "islamic", text: "A theology (religion) that uses the Qur’an as Divine Revelation." },
+        { type: "christian", text: "A theology (religion) that uses the Christian Bible as Divine Revelation." },
+        { type: "catholic", text: "A Christian theology (religion) that uses the Christian Bible AND Catholic Tradition as Divine Revelation." },
+        { type: "science", text: "The method of giving reasons for beliefs (doing philosophy) within a strictly naturalistic worldview. Uses natural evidence, but NOT Divine Revelation as valid evidence." },
+        { type: "social", text: "A science that focuses specifically on people." },
+        { type: "hard", text: "A science that focuses on the physical world, not specifically people." },
+        { type: "psychology", text: "A social science specifically about the human mind and behavior." },
+        { type: "biology", text: "A hard science specifically about living organisms and life processes." },
+        { type: "physics", text: "A hard science specifically about energy, forces, space, and time." }
+    ];
+
+    const bgImage = new Image(); 
+    bgImage.src = 'tree.jpeg'; 
+    bgImage.onerror = function() { alert("CRITICAL ERROR: 'tree.jpeg' not found."); };
+
+    const bgMusic = new Audio('Squirrels_Sunny_Day_2025-12-19T191944.mp3'); 
+    bgMusic.loop = true; bgMusic.volume = 0.5;
+
+    let gameState = 'MENU';
+    let score = 0;
+    let deck = [];
+    let currentCard = null;
+    let frames = 0;
+    let isMuted = false;
+    let isZoomed = false;
+
+    const player = { x: GAME_W/2, y: GAME_H - 120, speed: 7, facingRight: false, holding: null, anim: 0 };
+    const spawner = { x: GAME_W/2 - 70, y: GAME_H - 100, w: 140, h: 80, active: true };
+    const particles = [];
+    let message = null;
+
+    const ctxBG = document.getElementById('bgCanvas').getContext('2d');
+    const ctx = document.getElementById('gameCanvas').getContext('2d');
+    const ctxFX = document.getElementById('fxCanvas').getContext('2d');
+    [ctxBG, ctx, ctxFX].forEach(c => { c.canvas.width = GAME_W; c.canvas.height = GAME_H; });
+
+    const keys = { w:false, a:false, s:false, d:false, space:false };
+    window.addEventListener('keydown', e => { if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault(); handleKey(e.key, true); });
+    window.addEventListener('keyup', e => handleKey(e.key, false));
+    function handleKey(k, s) {
+        if(k===' '||k==='Spacebar') keys.space=s;
+        if(k==='ArrowUp'||k==='w') keys.w=s;
+        if(k==='ArrowDown'||k==='s') keys.s=s;
+        if(k==='ArrowLeft'||k==='a') keys.a=s;
+        if(k==='ArrowRight'||k==='d') keys.d=s;
+    }
+
+    document.getElementById('gameCanvas').addEventListener('mousedown', (e) => {
+        if (gameState !== 'PLAY') return;
+        if (isZoomed) { isZoomed = false; return; }
+        if (player.holding) {
+            const rect = ctx.canvas.getBoundingClientRect();
+            const scaleX = ctx.canvas.width / rect.width;
+            const scaleY = ctx.canvas.height / rect.height;
+            const clickX = (e.clientX - rect.left) * scaleX;
+            const clickY = (e.clientY - rect.top) * scaleY;
+            if (Math.abs(clickX - player.x) < 120 && Math.abs(clickY - (player.y - 100)) < 120) isZoomed = true;
+        }
+    });
+
+    function toggleAudio() {
+        isMuted = !isMuted; bgMusic.muted = isMuted;
+        document.getElementById('mute-btn').innerText = isMuted ? "🔇" : "🔊";
+    }
+
+    function startGame() {
+        if(gameState === 'OVER') { location.reload(); return; }
+        bgMusic.play().catch(()=>{});
+        document.getElementById('overlay').classList.add('hidden');
+        deck = [...rawDeck].sort(() => Math.random() - 0.5);
+        if(bgImage.complete) ctxBG.drawImage(bgImage, 0, 0, GAME_W, GAME_H);
+        bgImage.onload = () => ctxBG.drawImage(bgImage, 0, 0, GAME_W, GAME_H);
+        
+        // --- RESET VISUALS FROM END SCREEN ---
+        const container = document.getElementById('game-container');
+        container.style.background = '#000';
+        container.style.border = '4px solid #333';
+        container.style.boxShadow = '0 0 50px rgba(0,0,0,0.9)';
+        
+        document.getElementById('bgCanvas').style.display = 'block';
+        document.getElementById('gameCanvas').style.display = 'block';
+        document.getElementById('fxCanvas').style.display = 'block';
+        document.getElementById('ui-layer').style.display = 'block';
+
+        const vid = document.getElementById('ending-video');
+        vid.pause(); vid.currentTime = 0; vid.style.display = 'none';
+        
+        gameState = 'PLAY';
+        loop();
+    }
+
+    function loop() {
+        if (gameState !== 'OVER') requestAnimationFrame(loop);
+        update();
+        draw();
+    }
+
+    function update() {
+        if (isZoomed) return;
+        frames++;
+        
+        if(keys.w) player.y -= player.speed;
+        if(keys.s) player.y += player.speed;
+        if(keys.a) { player.x -= player.speed; player.facingRight=false; }
+        if(keys.d) { player.x += player.speed; player.facingRight=true; }
+        player.x = Math.max(30, Math.min(GAME_W - 30, player.x));
+        player.y = Math.max(30, Math.min(GAME_H - 30, player.y));
+        player.anim = (keys.w||keys.s||keys.a||keys.d) ? Math.sin(frames * 0.3) * 5 : 0;
+
+        if(spawner.active && !player.holding && deck.length > 0) {
+            if(dist(player.x, player.y, spawner.x+70, spawner.y+40) < 60) {
+                player.holding = deck.pop();
+                spawner.active = false;
+                spawnParticles(player.x, player.y, 15, '#fff');
+            }
+        }
+
+        if(keys.space && player.holding) {
+            checkDrop();
+            keys.space = false;
+        }
+
+        const panel = document.getElementById('side-panel');
+        if (player.holding) {
+            document.getElementById('panel-text').innerText = player.holding.text;
+            panel.classList.add('visible');
+        } else {
+            panel.classList.remove('visible');
+        }
+
+        updateParticles();
+        document.getElementById('ui-score').innerText = score;
+        let progress = (rawDeck.length - deck.length - (player.holding ? 1 : 0));
+        document.getElementById('ui-progress').innerText = (progress + (player.holding?1:0)) + "/" + rawDeck.length;
+    }
+
+    function checkDrop() {
+        for (const [key, zone] of Object.entries(ZONES)) {
+            const zX = zone.x * GAME_W; const zY = zone.y * GAME_H;
+            if(dist(player.x, player.y, zX, zY) < zone.r + 20) {
+                if(player.holding.type === key) {
+                    score += 100;
+                    showMessage("CORRECT!", "#2ecc71");
+                    spawnParticles(zX, zY, 30, '#f1c40f');
+                    player.holding = null;
+                    if(deck.length > 0) {
+                        setTimeout(() => spawner.active=true, 800);
+                    } else {
+                        endGame(); 
+                    }
+                } else {
+                    score = Math.max(0, score - 25);
+                    showMessage("WRONG BRANCH!", "#e74c3c");
+                    spawnParticles(zX, zY, 15, '#e74c3c');
+                }
+                return;
+            }
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, GAME_W, GAME_H);
+        const pulse = Math.sin(frames * 0.05) * 3;
+        let activeZone = null;
+
+        for (const [key, zone] of Object.entries(ZONES)) {
+            const zX = zone.x * GAME_W; const zY = zone.y * GAME_H;
+            if(dist(player.x, player.y, zX, zY) < zone.r + 20) {
+                ctx.beginPath(); ctx.arc(zX, zY, zone.r + pulse, 0, Math.PI*2);
+                if(player.holding) {
+                    ctx.fillStyle = "rgba(46, 204, 113, 0.4)"; ctx.strokeStyle = "#2ecc71"; ctx.lineWidth = 4;
+                    activeZone = true;
+                } else {
+                    ctx.fillStyle = "rgba(255,255,255,0.05)"; ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2;
+                }
+                ctx.fill(); ctx.stroke();
+            }
+        }
+
+        if(spawner.active && deck.length > 0) {
+            ctx.shadowBlur = 15; ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.fillStyle = "#f0e6d2"; ctx.fillRect(spawner.x+4, spawner.y+4, spawner.w, spawner.h);
+            ctx.fillStyle = "#fdfbf7"; ctx.fillRect(spawner.x, spawner.y, spawner.w, spawner.h);
+            ctx.strokeStyle = "#d4af37"; ctx.lineWidth = 2; ctx.strokeRect(spawner.x, spawner.y, spawner.w, spawner.h);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "#2c3e50"; ctx.font = "700 16px Lato"; ctx.textAlign = "center";
+            ctx.fillText("PICK UP", spawner.x + spawner.w/2, spawner.y + spawner.h/2 + 6);
+        } else if (deck.length === 0 && !player.holding) {
+             ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.font = "700 16px Lato"; ctx.textAlign = "center";
+             ctx.fillText("EMPTY", spawner.x + spawner.w/2, spawner.y + spawner.h/2 + 6);
+        }
+
+        ctx.save();
+        ctx.translate(player.x, player.y + player.anim);
+        if(player.facingRight) ctx.scale(-1, 1);
+        ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.beginPath(); ctx.ellipse(0, 25 - player.anim, 20, 5, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#000"; ctx.font = "60px Serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🐿️", 0, 0);
+        ctx.restore();
+
+        if(player.holding && !isZoomed) {
+            const cX = player.x; const cY = player.y - 120 + player.anim;
+            ctx.shadowBlur = 10; ctx.shadowColor = "rgba(0,0,0,0.3)";
+            ctx.fillStyle = "#fff"; ctx.fillRect(cX - 120, cY - 40, 240, 80);
+            ctx.strokeStyle = "#ccc"; ctx.strokeRect(cX - 120, cY - 40, 240, 80);
+            ctx.shadowBlur = 0; ctx.fillStyle = "#111"; ctx.textAlign = "center";
+            
+            ctx.font = "700 12px Lato";
+            ctx.fillText(player.holding.text.substring(0, 30) + "...", cX, cY); 
+            ctx.font = "16px Serif"; ctx.fillText("🔍", cX + 105, cY + 30);
+
+            if(activeZone) {
+                ctx.fillStyle = "#f1c40f"; ctx.font = "900 20px Lato"; ctx.strokeStyle = "black"; ctx.lineWidth = 3;
+                ctx.strokeText("PRESS SPACE", player.x, player.y - 170); ctx.fillText("PRESS SPACE", player.x, player.y - 170);
+            }
+        }
+
+        drawParticles(ctx);
+        if(message && message.timer > 0) {
+            message.timer--;
+            ctx.save(); ctx.globalAlpha = Math.min(1, message.timer/20);
+            ctx.font = "900 60px Cinzel"; ctx.fillStyle = message.color;
+            ctx.strokeStyle = "black"; ctx.lineWidth = 6; ctx.textAlign = "center";
+            ctx.strokeText(message.text, GAME_W/2, GAME_H/2); ctx.fillText(message.text, GAME_W/2, GAME_H/2);
+            ctx.restore();
+        }
+
+        if(isZoomed && player.holding) {
+            ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 0, GAME_W, GAME_H);
+            ctx.fillStyle = "#fff"; ctx.fillRect((GAME_W-600)/2, (GAME_H-400)/2, 600, 400);
+            ctx.fillStyle = "#111"; ctx.font = "700 24px Lato"; ctx.textAlign = "center";
+            const words = player.holding.text.split(' ');
+            let lines = [], line = "";
+            words.forEach(w => {
+                if(ctx.measureText(line + w).width > 500) { lines.push(line); line = w + " "; }
+                else line += w + " ";
+            });
+            lines.push(line);
+            lines.forEach((l, i) => ctx.fillText(l, GAME_W/2, (GAME_H/2 - (lines.length*15)) + (i*40)));
+        }
+    }
+
+    function endGame() {
+        gameState = 'OVER';
+        
+        // 1. Stop Game Music
+        bgMusic.pause();
+
+        // 2. Hide Everything that blocks the view
+        document.getElementById('ui-layer').style.display = 'none';
+        document.getElementById('bgCanvas').style.display = 'none';
+        document.getElementById('gameCanvas').style.display = 'none';
+        document.getElementById('fxCanvas').style.display = 'none';
+        
+        // 3. Make Game Container Transparent
+        const container = document.getElementById('game-container');
+        container.style.background = 'transparent';
+        container.style.border = 'none';
+        container.style.boxShadow = 'none';
+        
+        // 4. Play Video
+        const vid = document.getElementById('ending-video');
+        vid.style.display = 'block';
+        vid.muted = false; // Enable sound!
+        vid.play().catch(e => console.log("Video play failed:", e));
+
+        // 5. Show Overlay Text
+        const overlay = document.getElementById('overlay');
+        overlay.classList.remove('hidden');
+        overlay.classList.add('win-screen');
+        document.getElementById('win-avatar').style.display = "none"; 
+        document.getElementById('title-text').innerText = "CURRICULUM COMPLETE";
+        document.getElementById('title-text').style.display = "block"; 
+        document.getElementById('subtitle-text').innerText = "Final Score: " + score;
+        document.getElementById('subtitle-text').style.display = "block"; 
+        
+        // Ensure instructions are hidden in win screen
+        document.querySelector('.card-panel').style.display = "none";
+        
+        // Show Replay button
+        document.getElementById('replay-btn').style.display = "block";
+    }
+
+    function dist(x1,y1,x2,y2) { return Math.hypot(x1-x2, y1-y2); }
+    function spawnParticles(x, y, n, c) { for(let i=0; i<n; i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*12, vy:(Math.random()-0.5)*12, life:30+Math.random()*30, c:c}); }
+    function updateParticles() { for(let i=particles.length-1; i>=0; i--) { let p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.2; p.life--; if(p.life<=0) particles.splice(i,1); } }
+    function drawParticles(c) { for(let p of particles) { c.fillStyle=p.c; c.fillRect(p.x, p.y, 5, 5); } }
+    function showMessage(t, c) { message = { text: t, color: c, timer: 120 }; }
+</script>
+</body>
+</html>

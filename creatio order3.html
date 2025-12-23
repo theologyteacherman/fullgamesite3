@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Genesis 1 Pattern Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --accent: #fbbf24;
+      --accent-soft: #facc6b;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --forming-color: #3b82f6; 
+      --filling-color: #f59e0b; 
+      --rest-color: #ec4899;    
+      --radius-lg: 18px;
+      --shadow-soft: 0 18px 40px rgba(15,23,42,0.9);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 45%, #000 100%);
+      color: var(--text-main);
+      overflow: hidden; 
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+    }
+
+    #confetti {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 150;
+    }
+
+    .shell {
+      width: min(1100px, 100vw);
+      height: 100vh;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      z-index: 10;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
+    }
+    .title-main {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 99px;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .panel {
+      flex: 1;
+      border-radius: var(--radius-lg);
+      background: #020617;
+      border: 1px solid rgba(148,163,184,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .game-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    /* --- REBUILT REFERENCE POSTER --- */
+    /* This creates a mini-grid to replace the single image */
+    .ref-poster-container {
+      width: 200px;
+      margin: 0 auto 10px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      overflow: hidden;
+      opacity: 0.7;
+    }
+    .ref-cell {
+      aspect-ratio: 4/3;
+      background-color: #000;
+      background-repeat: no-repeat;
+    }
+    /* Days 1-5 use the original poster file */
+    .ref-cell.p1 { background-image: url('days_poster.png'); background-size: 300% 200%; background-position: 0% 0%; }
+    .ref-cell.p2 { background-image: url('days_poster.png'); background-size: 300% 200%; background-position: 50% 0%; }
+    .ref-cell.p3 { background-image: url('days_poster.png'); background-size: 300% 200%; background-position: 100% 0%; }
+    .ref-cell.p4 { background-image: url('days_poster.png'); background-size: 300% 200%; background-position: 0% 100%; }
+    .ref-cell.p5 { background-image: url('days_poster.png'); background-size: 300% 200%; background-position: 50% 100%; }
+    /* Day 6 uses YOUR NEW IMAGE */
+    .ref-cell.p6 { background-image: url('day6.png'); background-size: cover; background-position: center; }
+
+
+    .order-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    
+    .col-header {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      opacity: 0.8;
+      margin-bottom: -10px;
+    }
+
+    .day-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(148,163,184,0.3);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-height: 80px;
+      transition: all 0.3s ease;
+    }
+    
+    .day-card[data-type="forming"] { border-left: 4px solid var(--forming-color); }
+    .day-card[data-type="filling"] { border-left: 4px solid var(--filling-color); }
+    .day-card[data-type="rest"] { 
+      grid-column: span 2; 
+      border-bottom: 4px solid var(--rest-color);
+      justify-content: center;
+      text-align: center;
+    }
+
+    /* --- GAME THUMBNAILS --- */
+    .day-thumb {
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      background-color: #000;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.2);
+      background-image: url('days_poster.png'); 
+      background-repeat: no-repeat;
+      background-size: 300% 200%; 
+      display: none; 
+    }
+
+    .day-thumb.revealed {
+      display: block;
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Crops for Days 1-5 */
+    .day-thumb[data-day="1"] { background-position: 0% 0%; }
+    .day-thumb[data-day="2"] { background-position: 50% 0%; }
+    .day-thumb[data-day="3"] { background-position: 100% 0%; }
+    .day-thumb[data-day="4"] { background-position: 0% 100%; }
+    .day-thumb[data-day="5"] { background-position: 50% 100%; }
+
+    /* Day 6 (PNG) */
+    .day-thumb[data-day="6"] {
+      background-image: url('day6.png') !important;
+      background-size: cover !important;
+      background-position: center !important;
+    }
+
+    /* Day 7 (PNG) */
+    .day-thumb[data-day="7"] {
+      background-image: url('day7.png') !important;
+      background-size: cover !important;
+      background-position: center !important;
+      box-shadow: 0 0 15px rgba(236, 72, 153, 0.5); 
+    }
+
+    .card-text {
+      flex: 1;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .card-title {
+        display: block; 
+        color: var(--text-main); 
+        font-size: 0.9rem; 
+        margin-bottom: 2px;
+    }
+
+    .answer-text {
+        opacity: 0; 
+        transition: opacity 0.5s ease;
+    }
+    .answer-text.visible { opacity: 1; }
+
+    .controls {
+      background: rgba(15,23,42,0.95);
+      padding: 15px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .narration { color: var(--accent); font-size: 0.95rem; text-align: center; }
+
+    .btn-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+
+    .choice-btn {
+      background: radial-gradient(circle at top, #1e293b, #0f172a);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #e5e7eb;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .choice-btn:hover { background: #334155; transform: translateY(-2px); border-color: var(--accent); }
+    .choice-btn:disabled { opacity: 0; pointer-events: none; }
+
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none;
+      align-items: center; justify-content: center; z-index: 100;
+    }
+    .overlay.active { display: flex; }
+    .overlay-box {
+      background: #0f172a; border: 1px solid var(--accent); padding: 30px;
+      border-radius: 20px; text-align: center; max-width: 500px;
+    }
+    .overlay-box h2 { color: var(--accent); margin-top: 0; }
+    .big-btn {
+      background: var(--accent); color: #000; border: none; padding: 12px 24px;
+      font-weight: bold; border-radius: 99px; cursor: pointer; margin-top: 15px;
+    }
+    @keyframes flash {
+      0% { background: rgba(251, 191, 36, 0); }
+      50% { background: rgba(251, 191, 36, 0.2); transform: scale(1.02); }
+      100% { background: rgba(251, 191, 36, 0); }
+    }
+    .highlight-connect { animation: flash 1s ease; border-color: var(--accent); }
+
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti"></canvas>
+
+  <div class="shell">
+    <header>
+      <div class="title-main">Genesis 1 Structure</div>
+      <div class="badge">Builder Mode</div>
+    </header>
+
+    <main class="panel">
+      <div class="game-area">
+        
+        <div style="text-align:center;">
+            <div class="ref-poster-container">
+                <div class="ref-cell p1"></div>
+                <div class="ref-cell p2"></div>
+                <div class="ref-cell p3"></div>
+                <div class="ref-cell p4"></div>
+                <div class="ref-cell p5"></div>
+                <div class="ref-cell p6"></div> </div>
+            <div style="font-size:0.7rem; color:#666; margin-bottom:10px;">Reference Pattern</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:5px;">
+            <div class="col-header" style="color:var(--forming-color)">Forming (Days 1-3)</div>
+            <div class="col-header" style="color:var(--filling-color)">Filling (Days 4-6)</div>
+        </div>
+
+        <div class="order-grid" id="orderGrid"></div>
+      </div>
+
+      <div class="controls">
+        <div class="narration" id="message">...</div>
+        <div class="btn-grid" id="buttonArea"></div>
+      </div>
+    </main>
+  </div>
+
+  <div class="overlay" id="winScreen">
+    <div class="overlay-box">
+      <h2>Congratulations!</h2>
+      <p>You ordered the seven days of creation!</p>
+      <p>In a future lesson, we will see how days 1-3 on the left, match up thematically with days 4-6 on the right.</p>
+      <button class="big-btn" onclick="location.reload()">Build Again</button>
+    </div>
+  </div>
+
+  <script>
+    // DATA
+    const gameData = [
+      { id: 1, type: "forming", label: "Day 1", topic: "Light", text: "God says 'Let there be Light'. Separation of Day & Night.", pair: 4 },
+      { id: 2, type: "forming", label: "Day 2", topic: "Sky & Sea", text: "God separates the waters above (Sky) from waters below (Sea).", pair: 5 },
+      { id: 3, type: "forming", label: "Day 3", topic: "Land & Plants", text: "God gathers water to let Dry Land appear.", pair: 6 },
+      { id: 4, type: "filling", label: "Day 4", topic: "Sun, Moon, Stars", text: "God fills the light with rulers: Sun, Moon, and Stars.", pair: 1 },
+      { id: 5, type: "filling", label: "Day 5", topic: "Birds & Fish", text: "God fills the sky and sea with living creatures.", pair: 2 },
+      { id: 6, type: "filling", label: "Day 6", topic: "Animals & Humans", text: "God fills the dry land with animals and people.", pair: 3 },
+      { id: 7, type: "rest",    label: "Day 7", topic: "Sabbath", text: "God ceases work and makes the day Holy.", pair: null }
+    ];
+
+    let step = 0;
+    const grid = document.getElementById('orderGrid');
+    const btnArea = document.getElementById('buttonArea');
+    const msg = document.getElementById('message');
+    const layoutOrder = [0, 3, 1, 4, 2, 5, 6];
+
+    function init() {
+      layoutOrder.forEach(idx => {
+        const item = gameData[idx];
+        const card = document.createElement('div');
+        card.className = 'day-card';
+        card.dataset.type = item.type;
+        card.id = `slot-${item.id}`;
+        
+        card.innerHTML = `
+          <div class="day-thumb" id="thumb-${item.id}" data-day="${item.id}"></div>
+          <div class="card-text">
+            <strong class="card-title">${item.label}</strong>
+            <div class="answer-text"></div> 
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      const shuffled = [...gameData].sort(() => Math.random() - 0.5);
+      shuffled.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.innerText = item.text;
+        btn.onclick = () => checkAnswer(btn, item);
+        btnArea.appendChild(btn);
+      });
+      updatePrompt();
+    }
+
+    function updatePrompt() {
+      if(step < 7) {
+        msg.innerHTML = `Find the verse for <span style="color:#fbbf24; font-weight:bold;">Day ${step + 1}</span>`;
+      } else {
+        // --- END GAME SEQUENCE ---
+        msg.innerHTML = `<span style="color:#ec4899; font-weight:bold;">It is finished.</span>`;
+        setTimeout(() => {
+            document.getElementById('winScreen').classList.add('active');
+            fireConfetti(); // Trigger Animation
+        }, 4000); 
+      }
+    }
+
+    function checkAnswer(btn, item) {
+      const currentTarget = step + 1;
+      if (item.id === currentTarget) {
+        step++;
+        btn.disabled = true;
+        
+        // Reveal Image
+        const thumb = document.getElementById(`thumb-${item.id}`);
+        thumb.classList.add('revealed');
+
+        // Reveal Text
+        const slot = document.getElementById(`slot-${item.id}`);
+        const title = slot.querySelector('.card-title');
+        title.innerText = `${item.label}: ${item.topic}`; 
+        
+        const textZone = slot.querySelector('.answer-text');
+        textZone.innerText = item.text;
+        textZone.classList.add('visible');
+        
+        // Connect logic
+        if (item.type === 'filling') {
+           const partnerId = item.pair;
+           const partnerSlot = document.getElementById(`slot-${partnerId}`);
+           partnerSlot.classList.add('highlight-connect');
+           setTimeout(() => partnerSlot.classList.remove('highlight-connect'), 1000);
+        }
+        updatePrompt();
+      } else {
+        btn.style.background = '#ef4444';
+        setTimeout(() => btn.style.background = '', 400);
+        msg.innerText = "Not that one! Try again.";
+      }
+    }
+
+    // --- CONFETTI LOGIC ---
+    function fireConfetti() {
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let particles = [];
+        const colors = ['#fbbf24', '#4ade80', '#3b82f6', '#ec4899', '#fcd34d'];
+        
+        for(let i=0; i<150; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                w: Math.random() * 10 + 5,
+                h: Math.random() * 10 + 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                speed: Math.random() * 5 + 3,
+                angle: Math.random() * 6.2,
+                spin: Math.random() * 0.2 - 0.1
+            });
+        }
+        
+        function animate() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            let active = false;
+            particles.forEach(p => {
+                p.y += p.speed;
+                p.angle += p.spin;
+                if(p.y < canvas.height) active = true;
+                
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+                ctx.restore();
+            });
+            if(active) requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    init();
+  </script>
+</body>
+</html>

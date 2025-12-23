@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Fall of the Angels</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@900&family=Orbitron:wght@500;900&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --gold: #FFD700; 
+            --neon-blue: #00F3FF; 
+            --danger: #FF0033; 
+            --garden: #39FF14; 
+            --glass: rgba(10, 15, 20, 0.95); 
+        }
+        
+        body { 
+            margin: 0; 
+            background: #050505; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; 
+            font-family: 'VT323', monospace; 
+            cursor: default; 
+            user-select: none; 
+        }
+        
+        #cabinet { 
+            position: relative; width: 1100px; height: 800px; 
+            background: #111; border-radius: 20px; padding: 30px; 
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.8), 0 0 0 5px #222, 0 0 100px rgba(0, 243, 255, 0.1); 
+        }
+        
+        #monitor { 
+            width: 100%; height: 100%; background: #000; 
+            border-radius: 4px; position: relative; overflow: hidden; 
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.9); border: 2px solid #333; 
+        }
+        
+        canvas { display: block; width: 100%; height: 100%; background: #001f3f; }
+        
+        .scanlines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; pointer-events: none; z-index: 50; opacity: 0.6; }
+        .crt-glow { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.4) 90%, rgba(0,0,0,1) 130%); pointer-events: none; z-index: 51; }
+        
+        /* UI LAYERS */
+        .ui-layer { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            background: var(--glass); z-index: 60; 
+            opacity: 0; visibility: hidden; 
+            transition: opacity 0.8s ease, visibility 0.8s; 
+            text-align: center; 
+        }
+        .active { opacity: 1; visibility: visible; pointer-events: auto; }
+        
+        /* TYPOGRAPHY */
+        h1 { 
+            font-family: 'Cinzel', serif; font-size: 3.5em; color: var(--gold); 
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5); 
+            margin: 0 0 20px 0; 
+            letter-spacing: 5px; 
+            text-transform: uppercase; 
+            animation: fireText 3s ease-in-out infinite alternate; 
+        }
+        h2 { margin: 0 0 100px 0; }
+        @keyframes fireText { from { text-shadow: 0 0 20px var(--gold); } to { text-shadow: 0 0 40px orangered; } }
+        
+        .quote-box { 
+            border-left: 4px solid var(--neon-blue); 
+            background: linear-gradient(90deg, rgba(0,243,255,0.05), transparent); 
+            padding: 30px 50px; 
+            margin: 0 0 60px 0; 
+            max-width: 800px; 
+            text-align: left; 
+        }
+        /* FIXED SCRIPTURE STYLING */
+        .scripture { 
+            font-family: 'Cinzel', serif; 
+            font-size: 1.8em; 
+            color: #fff; 
+            line-height: 1.4; 
+            font-style: italic; 
+            min-height: 2.8em;
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+        }
+        .citation { display: block; margin-top: 15px; font-family: 'Orbitron', sans-serif; font-size: 1em; color: var(--neon-blue); letter-spacing: 2px; }
+        
+        /* STORY TEXT STYLES */
+        #story-text-container {
+            max-width: 900px;
+            text-align: left;
+            padding: 60px;
+        }
+        #story-content {
+            font-family: 'Cinzel', serif; 
+            font-size: 2.2em; 
+            color: #fff; 
+            line-height: 1.6; 
+            text-shadow: 0 0 10px var(--gold);
+            min-height: 200px;
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+        }
+        
+        /* BUTTON STYLES */
+        button { 
+            background: transparent; color: var(--gold); 
+            font-family: 'Orbitron', sans-serif; font-size: 1.5em; font-weight: 900; 
+            padding: 20px 80px; border: 3px solid var(--gold); 
+            text-transform: uppercase; cursor: pointer; letter-spacing: 4px; 
+            transition: all 0.2s ease; position: relative; overflow: hidden; 
+            z-index: 100000; pointer-events: auto;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
+        button:hover { 
+            background: rgba(0, 243, 255, 0.15); color: #fff; border-color: #fff;
+            box-shadow: 0 0 40px var(--neon-blue), inset 0 0 10px var(--neon-blue); 
+            text-shadow: 0 0 20px var(--neon-blue); transform: scale(1.05);
+        }
+        button:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.3); }
+
+        #hud { position: absolute; top: 30px; left: 40px; right: 40px; display: flex; justify-content: space-between; pointer-events: none; z-index: 55; font-family: 'Orbitron', sans-serif; color: #fff; text-shadow: 0 0 10px rgba(0,243,255,0.8); font-size: 24px; }
+        #cutscene-text { position: absolute; bottom: 100px; width: 100%; text-align: center; font-family: 'Cinzel', serif; font-size: 2em; color: #fff; text-shadow: 0 0 10px #000; z-index: 58; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="cabinet">
+    <div id="monitor">
+        <canvas id="gameCanvas" width="1100" height="800"></canvas>
+        <div class="scanlines"></div>
+        <div class="crt-glow"></div>
+        <div id="cutscene-text"></div>
+
+        <div id="hud">
+            <div id="hud-level" style="color: var(--gold);">LESSON 1</div>
+            <div id="hud-score">SCORE: 0</div>
+        </div>
+
+        <div id="screen-intro" class="ui-layer active">
+            <h1 class="rgb-split">THE FALL OF THE ANGELS</h1>
+            <h2 style="color: var(--neon-blue); font-family: 'Orbitron'; letter-spacing: 8px;">PART I</h2>
+            <button id="start-btn">ENTER GAME</button>
+        </div>
+
+        <div id="screen-story" class="ui-layer">
+            <div id="story-text-container">
+                <div id="story-content"></div>
+                <div id="story-cite" class="citation" style="opacity: 0; text-align: right; margin-top: 20px;">REVELATION 12:7</div>
+            </div>
+        </div>
+
+        <div id="screen-level" class="ui-layer">
+            <h1 id="lvl-title">Level Title</h1>
+            <div class="quote-box">
+                <div id="lvl-quote" class="scripture"></div>
+                <div id="lvl-cite" class="citation"></div>
+            </div>
+            <p id="lvl-desc" style="color:#aaa; font-size:1.4em; max-width:700px; margin-bottom:40px;">Explanation</p>
+            <div id="lvl-controls" style="color:var(--neon-blue); font-size:1.2em; border:1px dashed var(--neon-blue); padding:10px;">CONTROLS</div>
+            <br>
+            <button id="play-btn">BEGIN LESSON</button>
+        </div>
+
+        <div id="screen-fail" class="ui-layer">
+            <h1 style="color: var(--danger);">DEFEAT</h1>
+            <p id="fail-msg" style="color:#ccc; font-size:1.5em; margin-bottom:40px;">You drifted from the light.</p>
+            <button id="retry-btn" style="border-color: var(--danger); color: var(--danger);">TRY AGAIN</button>
+        </div>
+
+        <div id="screen-win" class="ui-layer">
+            <h1 style="color: var(--garden);">PART I COMPLETE</h1>
+            <div class="quote-box" style="border-color: var(--garden);">
+                <div class="scripture">"Where are you?"</div>
+                <div class="citation">GENESIS 3:9</div>
+            </div>
+            <p style="color:#aaa; font-size:1.4em;">Man has fallen. The journey of redemption begins in Part II.</p>
+            <button id="restart-btn" style="border-color: var(--garden); color: var(--garden);">REPLAY</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const Canvas = document.getElementById('gameCanvas');
+const Ctx = Canvas.getContext('2d');
+const W = Canvas.width; 
+const H = Canvas.height;
+const WALL = 40; 
+
+const AudioSys = {
+    ctx: null, enabled: false,
+    unlock: function() {
+        if(!this.ctx) { try { window.AudioContext = window.AudioContext || window.webkitAudioContext; this.ctx = new AudioContext(); this.enabled = true; } catch(e) { this.enabled=false; } }
+        if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    },
+    play: function(freq, type, dur, vol=0.1) {
+        if(!this.enabled || !this.ctx) return;
+        try { const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); o.type=type; o.frequency.setValueAtTime(freq, this.ctx.currentTime); g.gain.setValueAtTime(vol, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+dur); } catch(e){}
+    },
+    sfx: { 
+        jump: ()=>AudioSys.play(300,'square',0.1,0.1), 
+        swing: ()=>AudioSys.play(150,'sawtooth',0.1,0.2), 
+        hit: ()=>AudioSys.play(100,'sawtooth',0.2,0.2), 
+        fall: ()=>AudioSys.play(1000,'sawtooth',3.0,0.15), 
+        impact: ()=>AudioSys.play(50,'square',0.5,0.5), 
+        win: ()=> [440,554,659,880].forEach((f,i)=>setTimeout(()=>AudioSys.play(f,'sine',0.8,0.1), i*150)), 
+        type: ()=>AudioSys.play(800,'sine',0.03,0.02) 
+    }
+};
+
+const LEVELS = [
+    { type:"WAR", bg:"HEAVEN", title:"1. WAR IN HEAVEN", quote:"I saw Satan fall like lightning from heaven.", cite:"LUKE 10:18", desc:"Use your sword (SPACE) to knock demons into the CENTRAL GATE at the bottom. Strike from ABOVE to spike them down!", controls:"ARROWS: Fly | SPACE: Sword Strike" },
+    { type:"DODGE", bg:"GARDEN", title:"2. THE FATHER OF LIES", quote:"You will not certainly die... you will be like God.", cite:"GENESIS 3:4-5", desc:"Dodge the Serpent's lies (Red). Stay true.", controls:"ARROWS: Dodge" }
+];
+
+const REVELATION_TEXT = "And war broke out in heaven; Michael and his angels fought against the dragon. The dragon and his angels fought back, but they were defeated, and there was no longer any place for them in heaven.";
+
+const Sprites = {
+    drawAngel: function(ctx, x, y, size, swing) {
+        if(!ctx) return; const p = size/10; ctx.save(); ctx.translate(x, y);
+        ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.moveTo(0, 2*p); ctx.lineTo(-4*p, -2*p); ctx.lineTo(0, 5*p); ctx.fill(); 
+        ctx.beginPath(); ctx.moveTo(10*p, 2*p); ctx.lineTo(14*p, -2*p); ctx.lineTo(10*p, 5*p); ctx.fill();
+        ctx.fillStyle = '#C0C0C0'; ctx.fillRect(2*p, 2*p, 6*p, 6*p); ctx.fillStyle = '#E0E0E0'; ctx.fillRect(3*p, 0, 4*p, 3*p);
+        ctx.save(); ctx.fillStyle = '#00F3FF'; ctx.shadowBlur=10; ctx.shadowColor='#00F3FF';
+        if(swing) { ctx.translate(10*p, 4*p); ctx.rotate(Math.PI / 2); ctx.fillRect(0, 0, 2*p, 12*p); } 
+        else { ctx.fillRect(8*p, 1*p, 1*p, 8*p); ctx.fillRect(7*p, 6*p, 3*p, 1*p); }
+        ctx.restore(); ctx.restore();
+    },
+    // --- EVE SPRITE ---
+    drawEve: function(ctx, x, y, size) {
+        if(!ctx) return; const p = size/10; ctx.save(); ctx.translate(x, y);
+        // Hair (Long, Brown)
+        ctx.fillStyle = '#5D4037'; ctx.fillRect(1*p, 0, 8*p, 8*p); 
+        // Face
+        ctx.fillStyle = '#FFCCBC'; ctx.fillRect(2*p, 1*p, 6*p, 5*p);
+        // Eyes
+        ctx.fillStyle = '#5D4037'; ctx.fillRect(3*p, 3*p, 1*p, 1*p); ctx.fillRect(6*p, 3*p, 1*p, 1*p);
+        // Dress (White/Simple)
+        ctx.fillStyle = '#FFF9C4'; ctx.fillRect(2*p, 6*p, 6*p, 4*p);
+        ctx.restore();
+    },
+    drawDragon: function(ctx, x, y, size, isBoss, isStunned) {
+        if(!ctx) return; const p = size/10; ctx.save(); ctx.translate(x, y);
+        ctx.fillStyle = isStunned ? '#555' : (isBoss ? '#800' : '#D00');
+        ctx.fillRect(2*p,2*p,6*p,8*p); ctx.fillRect(0*p,1*p,2*p,4*p); ctx.fillRect(8*p,1*p,2*p,4*p);
+        ctx.shadowBlur = 10; ctx.shadowColor = '#39FF14'; ctx.fillStyle = '#39FF14';
+        ctx.fillRect(2*p,5*p,2*p,2*p); ctx.fillRect(6*p,5*p,2*p,2*p);
+        ctx.shadowBlur = 0; ctx.fillStyle = '#000'; ctx.fillRect(3*p,8*p,4*p,1*p);
+        if(isBoss) { ctx.fillStyle='gold'; ctx.fillRect(3*p, 0, 4*p, 2*p); } ctx.restore();
+    },
+    
+    // --- LEVEL 1: CLOUD WALLS ---
+    drawArena: function(ctx, w, h) {
+        if(!ctx) return; ctx.save(); 
+        const gateWidth = 300; const left = (w - gateWidth) / 2; const right = left + gateWidth;
+        
+        const drawCloudRect = (x, y, rw, rh) => {
+            ctx.fillStyle = "#ecf0f1"; 
+            const puffSize = 25;
+            if (rw > rh) { 
+                for(let i = 0; i <= rw; i+=20) {
+                    ctx.beginPath(); ctx.arc(x + i, y + rh/2, puffSize, 0, Math.PI*2); ctx.fill();
+                }
+            } else { 
+                for(let i = 0; i <= rh; i+=20) {
+                    ctx.beginPath(); ctx.arc(x + rw/2, y + i, puffSize, 0, Math.PI*2); ctx.fill();
+                }
+            }
+        };
+
+        drawCloudRect(0, 0, w, WALL); // Top
+        drawCloudRect(0, 0, WALL, h); // Left
+        drawCloudRect(w-WALL, 0, WALL, h); // Right
+        drawCloudRect(0, h-WALL, left, WALL); // Bottom Left
+        drawCloudRect(right, h-WALL, w-right, WALL); // Bottom Right
+
+        ctx.shadowBlur = 20; ctx.shadowColor = 'gold'; ctx.fillStyle = "gold"; 
+        ctx.fillRect(left-20, h-200, 20, 200); ctx.fillRect(right, h-200, 20, 200); 
+        ctx.shadowBlur = 0; ctx.fillStyle = "#000"; ctx.fillRect(left, h-20, gateWidth, 20); 
+        ctx.restore();
+    },
+
+    // --- LEVEL 2: TREE OF KNOWLEDGE ---
+    drawTreeOfKnowledge: function(ctx, x, y) {
+        if(!ctx) return; ctx.save(); ctx.translate(x, y);
+        ctx.fillStyle = '#5D4037'; ctx.fillRect(-20, 0, 40, 200);
+        ctx.fillStyle = '#2E7D32'; ctx.beginPath(); ctx.arc(0, 0, 100, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#D32F2F'; ctx.shadowBlur = 10; ctx.shadowColor = 'red'; ctx.beginPath(); ctx.arc(-20, 20, 15, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#7B1FA2'; ctx.lineWidth = 12; ctx.lineCap = "round"; ctx.beginPath();
+        ctx.moveTo(20, 150); ctx.bezierCurveTo(60, 120, -60, 80, 20, 50); ctx.lineTo(-40, 20); ctx.stroke();
+        ctx.fillStyle = '#FFEB3B'; ctx.beginPath(); ctx.arc(-42, 18, 3, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+    }
+};
+
+const Game = {
+    idx: 0, running: false, cutscene: null, lastTime: 0,
+    state: {}, keys: {}, particles: [], bgOffset: 0, shake: 0, freeze: 0, typeWriterTimer: 0, levelCompleted: false,
+
+    init: function() {
+        this.lastTime = performance.now();
+        document.getElementById('start-btn').addEventListener('click', () => this.startSequence());
+        document.getElementById('play-btn').addEventListener('click', () => this.playLevel());
+        document.getElementById('retry-btn').addEventListener('click', () => this.playLevel());
+        document.getElementById('restart-btn').addEventListener('click', () => location.reload());
+
+        window.addEventListener('keydown', e => { 
+            this.keys[e.code]=true; AudioSys.unlock(); 
+            
+            // --- SECRET CHEAT: SHIFT + 1 SKIPS TO LEVEL 2 ---
+            if (e.shiftKey && e.code === 'Digit1') {
+                this.idx = 1; // Set to Level 2
+                this.running = false;
+                this.switchScreen('screen-level');
+                this.loadLevelUI();
+            }
+
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) e.preventDefault(); 
+        });
+        window.addEventListener('keyup', e => this.keys[e.code]=false);
+        requestAnimationFrame(t => this.loop(t));
+    },
+
+    startSequence: function() {
+        AudioSys.unlock();
+        document.getElementById('screen-intro').classList.remove('active');
+        document.getElementById('screen-story').classList.add('active');
+        
+        const contentEl = document.getElementById('story-content');
+        const citeEl = document.getElementById('story-cite');
+        
+        contentEl.innerHTML = '';
+        const chars = REVELATION_TEXT.split('');
+        
+        chars.forEach(char => {
+            const span = document.createElement('span');
+            if (char === ' ') {
+                span.innerHTML = ' '; 
+            } else {
+                span.textContent = char;
+            }
+            span.style.opacity = '0';
+            span.style.transition = 'opacity 0.1s';
+            contentEl.appendChild(span);
+        });
+
+        let i = 0;
+        const spans = contentEl.querySelectorAll('span');
+        
+        const typeInterval = setInterval(() => {
+            if (i < spans.length) {
+                spans[i].style.opacity = '1'; 
+                if (spans[i].textContent.trim() !== "") AudioSys.sfx.type();
+                i++;
+            } else {
+                clearInterval(typeInterval);
+                citeEl.style.opacity = 1; 
+                setTimeout(() => {
+                    document.getElementById('screen-story').classList.remove('active');
+                    this.startGame();
+                }, 4000); 
+            }
+        }, 50); 
+    },
+
+    startGame: function() {
+        document.getElementById('screen-level').classList.add('active');
+        this.idx = 0; 
+        this.loadLevelUI();
+    },
+
+    loadLevelUI: function() {
+        const d = LEVELS[this.idx];
+        document.getElementById('lvl-title').innerText = d.title;
+        document.getElementById('lvl-cite').innerText = d.cite;
+        document.getElementById('lvl-desc').innerText = d.desc;
+        document.getElementById('lvl-controls').innerText = d.controls;
+        document.getElementById('hud-level').innerText = `LESSON ${this.idx+1}`;
+        const el = document.getElementById('lvl-quote'); el.innerText = "";
+        
+        const txt = `"${d.quote}"`; 
+        const chars = txt.split('');
+        
+        el.innerHTML = "";
+        chars.forEach(char => {
+            const span = document.createElement('span');
+            span.textContent = char;
+            span.style.opacity = '0';
+            span.style.transition = 'opacity 0.1s';
+            el.appendChild(span);
+        });
+
+        let i = 0;
+        const spans = el.querySelectorAll('span');
+        if(this.typeWriterTimer) clearInterval(this.typeWriterTimer);
+        
+        this.typeWriterTimer = setInterval(() => {
+            if (i < spans.length) {
+                spans[i].style.opacity = '1';
+                if(i % 3 === 0) AudioSys.sfx.type();
+                i++;
+            } else {
+                clearInterval(this.typeWriterTimer);
+            }
+        }, 30);
+    },
+
+    playLevel: function() { 
+        this.switchScreen(null); 
+        this.levelCompleted = false; 
+        this.initMechanics(LEVELS[this.idx].type); 
+        this.running = true; 
+    },
+
+    switchScreen: function(id) { document.querySelectorAll('.ui-layer').forEach(el => el.classList.remove('active')); if(id) document.getElementById(id).classList.add('active'); },
+
+    loop: function(t) {
+        const dt = Math.min((t-this.lastTime)/1000, 0.1); this.lastTime=t;
+        Ctx.save();
+        if(this.shake>0) { Ctx.translate((Math.random()-0.5)*this.shake, (Math.random()-0.5)*this.shake); this.shake*=0.9; if(this.shake<0.5) this.shake=0; }
+        Ctx.clearRect(0,0,W,H);
+        
+        if(this.cutscene) this.updateCutscene(dt);
+        else if(this.running) { 
+            this.drawBackground(dt); 
+            try { this.updateMechanics(dt); } catch(e) { console.error(e); }
+            this.updateParticles(dt); 
+        }
+        else this.drawBackground(dt*0.2);
+        Ctx.restore(); requestAnimationFrame(t=>this.loop(t));
+    },
+
+    drawBackground: function(dt) {
+        if(isNaN(this.bgOffset)) this.bgOffset = 0;
+        this.bgOffset += dt * 50;
+        const type = LEVELS[this.idx] ? LEVELS[this.idx].bg : "HEAVEN";
+        Ctx.fillStyle = "#000"; Ctx.fillRect(0,0,W,H); 
+
+        if(type === "HEAVEN") {
+            const g = Ctx.createLinearGradient(0,0,0,H); g.addColorStop(0, "#0074D9"); g.addColorStop(1, "#fff");
+            Ctx.fillStyle = g; Ctx.fillRect(0,0,W,H);
+            Ctx.save(); Ctx.translate(W/2, -100); Ctx.rotate(this.bgOffset*0.01); Ctx.fillStyle = "rgba(255, 255, 200, 0.1)"; for(let i=0; i<12; i++) { Ctx.rotate(Math.PI/6); Ctx.fillRect(0,0,200,H*2); } Ctx.restore();
+        } else if (type === "GARDEN") {
+            const g = Ctx.createLinearGradient(0,0,0,H); 
+            g.addColorStop(0, "#87CEEB"); 
+            g.addColorStop(0.6, "#87CEEB");
+            g.addColorStop(0.6, "#2ecc71"); 
+            g.addColorStop(1, "#27ae60");
+            Ctx.fillStyle = g; Ctx.fillRect(0,0,W,H);
+            Sprites.drawTreeOfKnowledge(Ctx, W - 150, H/2);
+        } else { Ctx.fillStyle = "#080808"; Ctx.fillRect(0,0,W,H); }
+    },
+
+    initMechanics: function(type) {
+        this.particles = []; const s = this.state = { t:0, score:0, enemies:[], items:[], bullets:[], phase:0 };
+        if(type==="WAR") { s.p={x:W/2, y:H/2, w:40, h:40, swing:0}; s.max=5; } 
+        if(type==="DODGE") { s.p={x:100, y:H/2, r:20}; s.max=20; }
+    },
+
+    updateMechanics: function(dt) {
+        const type = LEVELS[this.idx].type;
+        if(type==="WAR") this.upWar(dt); if(type==="DODGE") this.upDodge(dt);
+    },
+
+    upWar: function(dt) {
+        const s=this.state; const p=s.p;
+        Sprites.drawArena(Ctx, W, H);
+
+        if(this.keys['ArrowLeft']) p.x-=400*dt; if(this.keys['ArrowRight']) p.x+=400*dt;
+        if(this.keys['ArrowUp']) p.y-=400*dt; if(this.keys['ArrowDown']) p.y+=400*dt;
+        
+        const gateHalfWidth = 150; const gateCenter = W/2;
+        p.x = Math.max(WALL, Math.min(W - WALL, p.x)); 
+        if(Math.abs(p.x - gateCenter) < gateHalfWidth - 20) { } else { p.y = Math.min(p.y, H - WALL - 40); }
+        p.y = Math.max(WALL, p.y);
+
+        if(this.keys['Space'] && s.p.swing <= 0) { s.p.swing = 0.3; AudioSys.sfx.swing(); }
+        if(s.p.swing > 0) s.p.swing -= dt;
+
+        Sprites.drawAngel(Ctx, p.x, p.y, 40, s.p.swing > 0.1);
+
+        if(s.phase === 0) {
+            if(Math.random() < 0.02 && s.enemies.length < 4) {
+                 s.enemies.push({x:Math.random()*W, y:Math.random()*200, vx:(Math.random()-0.5)*150, vy:(Math.random()-0.5)*100, hp:1, boss:false});
+            }
+            upHud(s.score, s.max, "DEMONS CAST OUT");
+            if(s.score >= s.max) { s.phase = 1; s.enemies = []; s.enemies.push({x:W/2, y:200, vx:150, vy:0, hp:10, boss:true, w:80, h:80}); AudioSys.sfx.fall(); }
+        } else {
+            upHud(0,0, "PUSH SATAN THROUGH THE GATES!", true);
+        }
+
+        for(let i = s.enemies.length-1; i>=0; i--) {
+            let e = s.enemies[i];
+            if(!e.stun) {
+                if(e.boss) {
+                    e.x += e.vx * dt; e.y += -250 * dt; 
+                    if(e.x < WALL || e.x > W-WALL) e.vx *= -1;
+                    if(e.y < WALL + 80) e.y = WALL + 80; 
+                } else {
+                    e.x += e.vx * dt; e.y += e.vy * dt;
+                    if(e.x < WALL || e.x > W-WALL) e.vx *= -1;
+                    if(e.y < WALL) e.vy = Math.abs(e.vy);
+                    if(e.y > H-250) e.vy = -Math.abs(e.vy); 
+                }
+            } else {
+                e.x += e.vx * dt; e.y += e.vy * dt;
+                e.stun -= dt; e.vx *= 0.95; e.vy *= 0.95;
+                if(e.vy > 0) e.vy += 400 * dt; 
+                if(e.stun<=0) e.stun=0;
+            }
+            Sprites.drawDragon(Ctx, e.x, e.y, e.boss?100:40, e.boss, e.stun > 0);
+            if(s.p.swing > 0.1 && dist(p.x, p.y, e.x, e.y) < (e.boss?100:80)) {
+                e.stun = 0.5; 
+                let dx = e.x - p.x; let dy = e.y - p.y; let len = Math.sqrt(dx*dx + dy*dy) || 1;
+                let force = e.boss ? 600 : 800; e.vx = (dx / len) * force; e.vy = (dy / len) * force;
+                if(s.p.swing > 0.25) AudioSys.sfx.hit(); 
+            }
+            if(e.y > H - 50) {
+                if(Math.abs(e.x - gateCenter) < gateHalfWidth) {
+                    s.enemies.splice(i, 1);
+                    if(e.boss) this.win(); else s.score++;
+                } else { e.y = H - 60; e.stun = 0; e.vy = -300; AudioSys.sfx.impact(); }
+            }
+            if(e.x < WALL) { e.x = WALL; e.vx *= -1; } if(e.x > W-WALL) { e.x = W-WALL; e.vx *= -1; }
+        }
+    },
+
+    upDodge: function(dt) {
+        const s=this.state; const p=s.p;
+        if(this.keys['ArrowUp']) p.y-=400*dt; if(this.keys['ArrowDown']) p.y+=400*dt;
+        if(this.keys['ArrowLeft']) p.x-=400*dt; if(this.keys['ArrowRight']) p.x+=400*dt;
+        p.x+=30*dt; 
+        
+        p.y = Math.max(0, Math.min(H, p.y));
+        p.x = Math.max(0, Math.min(W, p.x));
+
+        this.particles.push({x:p.x, y:p.y, vx:0, vy:0, life:0.5, color:'rgba(255,255,255,0.5)', size:p.r*2});
+        
+        // --- FIXED: USE EVE SPRITE INSTEAD OF CAT ---
+        Sprites.drawEve(Ctx, p.x-p.r, p.y-p.r, p.r*2);
+        
+        if(Math.random()<0.04) { 
+            s.enemies.push({
+                x: W - 190, 
+                y: H/2 + 20, 
+                vx: -400 - Math.random()*200, 
+                vy: (Math.random()-0.5) * 400,
+                txt:["LIAR","EGO","TYRANT","PRIDE"][Math.floor(Math.random()*4)]
+            }); 
+        }
+        
+        s.enemies.forEach((e,i)=>{
+            e.x += e.vx * dt; 
+            e.y += e.vy * dt;
+            
+            Ctx.fillStyle=VAR('danger'); Ctx.font="24px 'Orbitron'"; Ctx.fillText(e.txt,e.x,e.y);
+            Sprites.drawDragon(Ctx, e.x-40, e.y-20, 30);
+            
+            if(dist(p.x,p.y,e.x,e.y)<40) { 
+                p.x-=200; 
+                this.hit(p.x,p.y,VAR('danger')); 
+                s.enemies.splice(i,1); 
+            }
+        });
+        
+        s.t+=dt; 
+        upHud(Math.ceil(s.max-s.t), 0, "TIME", true); 
+        
+        if(s.t>s.max) this.win();
+        if(p.x < 0) this.fail("Overcome by Lies.");
+    },
+
+    hit: function(x,y,c,big=false) { this.shake = big?20:5; this.freeze=big?5:0; AudioSys.sfx.hit(); this.spawnParticles(x,y,c,big?30:10); },
+    fail: function(m) { this.running=false; AudioSys.sfx.impact(); document.getElementById('fail-msg').innerText=m; this.switchScreen('screen-fail'); },
+    win: function() { if(this.levelCompleted) return; this.levelCompleted = true; this.running = false; AudioSys.sfx.win(); if(this.idx===0) { this.playCutscene("FALL"); return; } this.advanceLevel(); },
+    advanceLevel: function() { this.idx++; if(this.idx >= LEVELS.length) { this.switchScreen('screen-win'); } else { this.switchScreen('screen-level'); this.loadLevelUI(); } },
+    playCutscene: function(id) { this.cutscene={id:id, t:0, p:0}; if(id==="FALL") AudioSys.sfx.fall(); document.getElementById('cutscene-text').style.display = 'block'; },
+    updateCutscene: function(dt) { const c=this.cutscene; c.t+=dt; const txtEl = document.getElementById('cutscene-text'); if(c.id==="FALL") { let r=0,g=0,b=0; if(c.t < 3) { r=0; g=100; b=200; } else { let f = Math.min(1, (c.t-3)); r=0; g=Math.floor(100 + f*50); b=Math.floor(200 - f*180); } Ctx.fillStyle=`rgb(${r},${g},${b})`; Ctx.fillRect(0,0,W,H); let y = -50+(c.t**2)*80; this.spawnParticles(W/2, y, '#ff4500', 5); Sprites.drawDragon(Ctx, W/2-50, y-50, 100, true, false); if(c.t < 3) txtEl.innerText = "Satan was cast out of Heaven..."; else if(c.t < 6) txtEl.innerText = "...and fell into the Garden of Eden."; if(y>H-100 && c.p===0) { c.p=1; this.shake=30; this.freeze=5; AudioSys.sfx.impact(); this.spawnParticles(W/2,H-50,'#0f0',100); } if(c.t>6) { this.cutscene=null; txtEl.style.display='none'; this.advanceLevel(); } } this.updateParticles(dt); },
+    spawnParticles: function(x, y, color, count=10, speed=1) { for(let i=0; i<count; i++) this.particles.push({x:x, y:y, vx:(Math.random()-0.5)*400, vy:(Math.random()-0.5)*400, life:1.0, color:color, size:Math.random()*6+2}); },
+    updateParticles: function(dt) { for(let i=this.particles.length-1; i>=0; i--) { let p=this.particles[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=1.5*dt; Ctx.globalAlpha=Math.max(0,p.life); Ctx.fillStyle=p.color; Ctx.fillRect(p.x,p.y,p.size,p.size); Ctx.globalAlpha=1; if(p.life<=0) this.particles.splice(i,1); } }
+};
+
+// Utils
+function VAR(v) { return getComputedStyle(document.documentElement).getPropertyValue('--'+v).trim(); }
+function rnd(m,x) { return Math.random()*(x-m)+m; }
+function dist(x1,y1,x2,y2) { return Math.sqrt((x1-x2)**2+(y1-y2)**2); }
+function rectCol(x1,y1,w1,h1,x2,y2,w2,h2) { return x1<x2+w2 && x1+w1>x2 && y1<y2+h2 && y1+h1>y2; }
+function upHud(val, max, label, hideMax) { document.getElementById('hud-score').innerText = `${label}: ${Math.floor(val)}${hideMax?'':'/'+max}`; }
+
+Game.init();
+</script>
+</body>
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Match the Literary Tools</title>
+  <style>
+    :root{
+      --bg:#fff7f4;
+      --card:#ffffff;
+      --ink:#1d1d1f;
+      --accent:#9b4dca;
+      --muted:#6b6b6b;
+      --ok:#22aa66;
+      --bad:#cc3344;
+      --ring: 0 0 0 3px rgba(155,77,202,.25);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink);
+      background: radial-gradient(1200px 600px at 50% -20%, #ffe3d7 0%, transparent 60%) , var(--bg);
+      line-height:1.45;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .wrap{
+      width: min(1100px, 96vw);
+      padding: clamp(16px, 3vw, 28px);
+    }
+
+    header{
+      text-align:center;
+      margin-bottom: clamp(10px, 2vw, 14px);
+    }
+    h1{
+      font-size: clamp(24px, 3.2vw + 8px, 40px);
+      margin: 4px 0 8px;
+      letter-spacing:.2px;
+    }
+    p.sub{
+      color:var(--muted);
+      margin:0;
+      font-size: clamp(14px, 1.4vw + 6px, 18px);
+    }
+
+    .ui{
+      display:flex;
+      gap:16px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:center;
+      margin: 12px 0 22px;
+    }
+    button, .chip{
+      border:none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background:#f1e7ff;
+      color:#3b1b63;
+      font-weight:600;
+      cursor:pointer;
+      transition:.2s transform, .2s box-shadow, .2s opacity;
+      user-select:none;
+    }
+    button:hover{transform: translateY(-1px)}
+    button:active{transform: translateY(0) scale(.99)}
+    button:focus-visible{outline:none; box-shadow: var(--ring)}
+    .chip{
+      background:#fff;
+      border:2px dashed #c9b5e7;
+      color:#6a4aa6;
+      font-weight:700;
+      padding:8px 12px;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    @media (min-width: 900px){
+      .layout{grid-template-columns: 1fr 330px;}
+    }
+
+    .bank, .board{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px rgba(0,0,0,.06);
+      padding: clamp(14px, 2vw, 20px);
+    }
+
+    .bank h2, .board h2{
+      margin:0 0 10px;
+      font-size: clamp(18px, 1.6vw + 8px, 22px);
+    }
+
+    .tokens{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      min-height: 54px;
+    }
+
+    .token{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: #fff;
+      border:2px solid #e5d8fb;
+      box-shadow: 0 3px 0 #e5d8fb;
+      font-weight: 800;
+      letter-spacing:.2px;
+      cursor: grab;
+      user-select:none;
+      touch-action: none;
+      transition: .18s transform, .18s box-shadow, .18s background, .18s border-color;
+    }
+    .token:active{cursor:grabbing}
+    .token.selected{
+      border-color:#c7b1ff;
+      box-shadow: 0 3px 0 #c7b1ff, var(--ring);
+      transform: translateY(-1px);
+    }
+
+    .card{
+      border:2px solid #f0e5ff;
+      border-radius: 16px;
+      padding: 14px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      transition:.2s border-color, .2s box-shadow, .2s transform;
+      background:#fff;
+    }
+
+    .def{
+      font-size: clamp(15px, 1.2vw + 8px, 18px);
+    }
+
+    .slot{
+      background: #faf7ff;
+      border:2px dashed #c9b5e7;
+      border-radius: 12px;
+      min-height: 52px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6px 10px;
+      color:#6a4aa6;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .slot.filled{
+      border-style: solid;
+      border-color:#e5d8fb;
+      background:#fff;
+    }
+    .card.correct{border-color: #b8ebd0; box-shadow: 0 0 0 3px rgba(34,170,102,.15)}
+    .card.wrong{border-color: #ffd1d6; box-shadow: 0 0 0 3px rgba(204,51,68,.12)}
+
+    .status{
+      text-align:center;
+      margin-top: 14px;
+      min-height: 26px;
+      font-weight:700;
+      color: var(--muted);
+    }
+
+    .confetti{pointer-events:none; position:fixed; inset:0; display:none}
+    .confetti.active{display:block}
+    .confetti i{
+      position:absolute; width:10px; height:14px; opacity:0; animation: drop 1600ms forwards ease-in;
+    }
+    @keyframes drop{
+      0%{transform: translateY(-10vh) rotate(0deg); opacity:.9}
+      100%{transform: translateY(110vh) rotate(520deg); opacity:0}
+    }
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Match the Literary Tools</h1>
+      <p class="sub">Drag or tap to place each term with its definition.</p>
+    </header>
+
+    <div class="ui">
+      <button id="reshuffle">Shuffle Word Bank</button>
+      <button id="reset">Reset</button>
+      <span class="chip" id="progress">0 / 3 correct</span>
+    </div>
+
+    <div class="layout">
+      <section class="board" aria-live="polite">
+        <h2>Definitions</h2>
+        <div id="cards" class="cards" style="display:grid; gap:14px"></div>
+        <div class="status" id="status"></div>
+      </section>
+
+      <aside class="bank">
+        <h2>Word Bank</h2>
+        <div id="tokens" class="tokens" aria-label="Word Bank"></div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+
+  <script>
+  (function(){
+    const DEFINITIONS = [
+      {
+        key: "Historical Criticism",
+        text: "The literary tool of understanding writing in the historical, cultural, and biographical context of the author, as a means of 'getting at' the intended meaning of their text."
+      },
+      {
+        key: "Genre Criticism",
+        text: "The literary tool of understanding writing in the context of the literary genre and conventions in which an author composed a text, as a means of 'getting at' the intended meaning of their text."
+      },
+      {
+        key: "Source Criticism",
+        text: "The literary tool of understanding writing in the context of the original and independent sources that went into the composite text as we see it today, as a means of 'getting at' the intended meaning of the text."
+      }
+    ];
+
+    const cardsEl = document.getElementById('cards');
+    const tokensEl = document.getElementById('tokens');
+    const statusEl = document.getElementById('status');
+    const progressEl = document.getElementById('progress');
+    const confettiEl = document.getElementById('confetti');
+
+    function shuffle(arr){
+      const a = [...arr];
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]] = [a[j],a[i]];
+      }
+      return a;
+    }
+
+    let state = {
+      placed: {}, // slotId -> key
+      correct: 0
+    };
+
+    function renderBoard(){
+      cardsEl.innerHTML = '';
+      const shuffledDefs = shuffle(DEFINITIONS);
+      shuffledDefs.forEach((d, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.answer = d.key;
+        card.innerHTML = `
+          <div class="def">${d.text}</div>
+          <div class="slot" data-slot="${idx}" tabindex="0" aria-label="Drop zone for ${d.key}">Drop here</div>
+        `;
+        cardsEl.appendChild(card);
+      });
+    }
+
+    function renderTokens(){
+      tokensEl.innerHTML = '';
+      shuffle(DEFINITIONS.map(d=>d.key)).forEach(key => {
+        const t = document.createElement('div');
+        t.className = 'token';
+        t.textContent = key;
+        t.setAttribute('draggable','true');
+        t.dataset.key = key;
+        tokensEl.appendChild(t);
+      });
+    }
+
+    function reset(){
+      state = { placed:{}, correct:0 };
+      renderBoard();
+      renderTokens();
+      statusEl.textContent = '';
+      progressEl.textContent = '0 / 3 correct';
+      confettiEl.classList.remove('active');
+      enableDnD();
+    }
+
+    function updateProgress(){
+      progressEl.textContent = state.correct + ' / 3 correct';
+      if(state.correct === 3){
+        statusEl.textContent = 'Great job — all matched!';
+        celebrate();
+      }
+    }
+
+    function celebrate(){
+      confettiEl.innerHTML = '';
+      for(let i=0;i<60;i++){
+        const dot = document.createElement('i');
+        const x = Math.random()*100;
+        const delay = Math.random()*500;
+        dot.style.left = x + 'vw';
+        dot.style.top = '-6vh';
+        dot.style.background = `hsl(${Math.floor(Math.random()*360)}, 80%, 60%)`;
+        dot.style.animationDelay = delay+'ms';
+        confettiEl.appendChild(dot);
+      }
+      confettiEl.classList.add('active');
+      setTimeout(()=>confettiEl.classList.remove('active'), 1800);
+    }
+
+    function enableDnD(){
+      let selectedToken = null;
+
+      function onSelect(token){
+        if(selectedToken && selectedToken!==token){ selectedToken.classList.remove('selected'); }
+        selectedToken = token.classList.toggle('selected') ? token : null;
+      }
+
+      // Click-to-place (mobile friendly)
+      tokensEl.addEventListener('click', e => {
+        const token = e.target.closest('.token');
+        if(!token) return;
+        onSelect(token);
+      });
+
+      cardsEl.addEventListener('click', e => {
+        const slot = e.target.closest('.slot');
+        if(!slot || !selectedToken) return;
+        tryPlace(selectedToken, slot);
+        selectedToken.classList.remove('selected');
+        selectedToken = null;
+      });
+
+      // Keyboard support
+      tokensEl.addEventListener('keydown', e => {
+        const token = e.target.closest('.token');
+        if(!token) return;
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          onSelect(token);
+        }
+      });
+      cardsEl.addEventListener('keydown', e => {
+        const slot = e.target.closest('.slot');
+        if(!slot) return;
+        if((e.key === 'Enter' || e.key === ' ') && document.querySelector('.token.selected')){
+          e.preventDefault();
+          tryPlace(document.querySelector('.token.selected'), slot);
+          document.querySelector('.token.selected')?.classList.remove('selected');
+        }
+      });
+
+      // Drag & drop
+      tokensEl.addEventListener('dragstart', e => {
+        const t = e.target.closest('.token');
+        if(!t) return;
+        e.dataTransfer.setData('text/plain', t.dataset.key);
+        setTimeout(()=> t.classList.add('selected'), 0);
+      });
+      tokensEl.addEventListener('dragend', e => e.target.classList.remove('selected'));
+      cardsEl.addEventListener('dragover', e => e.preventDefault());
+      cardsEl.addEventListener('drop', e => {
+        e.preventDefault();
+        const key = e.dataTransfer.getData('text/plain');
+        const slot = e.target.closest('.slot');
+        if(!slot) return;
+        const token = [...tokensEl.children].find(n => n.dataset.key===key);
+        if(token) tryPlace(token, slot);
+      });
+
+      function tryPlace(token, slot){
+        if(slot.classList.contains('filled')){
+          statusEl.textContent = 'That slot is already filled.';
+          return;
+        }
+        const card = slot.closest('.card');
+        const correctKey = card.dataset.answer;
+        const chosenKey = token.dataset.key;
+
+        slot.textContent = chosenKey;
+        slot.classList.add('filled');
+        token.remove(); // remove from bank
+        const isCorrect = (chosenKey === correctKey);
+        card.classList.remove('wrong','correct');
+        card.classList.add(isCorrect ? 'correct' : 'wrong');
+
+        if(isCorrect){
+          state.correct += 1;
+          statusEl.textContent = 'Nice! Correct match.';
+        } else {
+          statusEl.textContent = 'Not quite. You can reset to try again.';
+        }
+        updateProgress();
+      }
+    }
+
+    // Wire up buttons
+    document.getElementById('reset').addEventListener('click', reset);
+    document.getElementById('reshuffle').addEventListener('click', () => {
+      // only reshuffle the bank
+      renderTokens();
+      enableDnD();
+      statusEl.textContent = 'Word bank shuffled.';
+    });
+
+    // Kick off
+    reset();
+  })();
+  </script>
+</body>
+</html>

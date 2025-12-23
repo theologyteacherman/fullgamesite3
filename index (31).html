@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chaos vs Creation: Ultimate Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    /* --- GLOBAL STYLES --- */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Lato', sans-serif;
+      background: radial-gradient(circle at top, #0f172a, #000);
+      color: #fdfdfd;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      overflow-x: hidden;
+    }
+    #game-root {
+      width: 100%;
+      max-width: 1100px;
+      padding: 20px;
+    }
+    
+    /* ANIMATIONS */
+    @keyframes shakeScreen {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      10% { transform: translate(-1px, -2px) rotate(-1deg); }
+      20% { transform: translate(-3px, 0px) rotate(1deg); }
+      30% { transform: translate(3px, 2px) rotate(0deg); }
+      40% { transform: translate(1px, -1px) rotate(1deg); }
+      50% { transform: translate(-1px, 2px) rotate(-1deg); }
+      60% { transform: translate(-3px, 1px) rotate(0deg); }
+      70% { transform: translate(3px, 1px) rotate(-1deg); }
+      80% { transform: translate(-1px, -1px) rotate(1deg); }
+      90% { transform: translate(1px, 2px) rotate(0deg); }
+      100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+    .shake-effect { animation: shakeScreen 0.5s; }
+
+    .screen {
+      display: none;
+      border-radius: 20px;
+      background: rgba(10, 15, 40, 0.95);
+      box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(255, 215, 0, 0.05);
+      padding: 30px;
+      border: 1px solid rgba(255,215,0,0.15);
+      animation: fadeIn 0.8s ease-out;
+    }
+    .screen.active { display: block; }
+    @keyframes fadeIn { from {opacity:0; transform: translateY(15px);} to {opacity:1; transform: translateY(0);} }
+
+    /* TYPOGRAPHY */
+    h1, h2, .god-speech { font-family: 'Cinzel', serif; }
+    
+    h1 { 
+      font-size: clamp(2.2rem, 5vw, 3.5rem); 
+      text-align: center; margin: 0 0 25px 0; 
+      text-transform: uppercase;
+      background: linear-gradient(to bottom, #ffd700, #b45309);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+    
+    h2 { font-size: clamp(1.8rem, 3vw, 2.5rem); color: #ffe066; margin-bottom: 15px; text-align: center; }
+    
+    p { line-height: 1.7; font-size: 1.1rem; color: #cbd5e1; margin-bottom: 20px; }
+    
+    .accent { color: #ffe066; font-weight: 700; }
+
+    /* BUTTONS */
+    .btn-row { display: flex; justify-content: center; gap: 20px; margin-top: 30px; flex-wrap: wrap; }
+    
+    button {
+      font-family: 'Cinzel', serif;
+      border-radius: 50px; border: none; padding: 16px 40px;
+      font-size: 1.1rem; font-weight: 900; cursor: pointer;
+      background: linear-gradient(135deg, #facc15, #ea580c);
+      color: #2a0a00; 
+      box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4);
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    button:hover { transform: translateY(-4px) scale(1.05); filter: brightness(1.2); box-shadow: 0 10px 25px rgba(234, 88, 12, 0.6); }
+    button:active { transform: translateY(1px); }
+    button:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; }
+    
+    .btn-ghost { 
+      background: transparent; border: 2px solid #64748b; color: #94a3b8; box-shadow: none; 
+      font-size: 0.9rem; padding: 10px 24px;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: #fff; }
+
+    /* --- LEVEL 1: BATTLE ARENA --- */
+    .canvas-shell {
+      position: relative; width: 100%; height: 500px;
+      background: radial-gradient(circle at top, #1e293b, #020617);
+      border-radius: 16px; border: 3px solid #334155;
+      overflow: hidden; margin-top: 20px;
+      box-shadow: inset 0 0 50px #000;
+    }
+    .canvas-shell::before {
+      content: ''; position: absolute; top:0; left:0; width: 200%; height: 100%;
+      background-image: 
+        radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+        radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+        radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+      background-size: 550px 550px, 350px 350px, 250px 250px;
+      background-position: 0 0, 40px 60px, 130px 270px;
+      animation: scrollBg 60s linear infinite; pointer-events: none; opacity: 0.6;
+    }
+    @keyframes scrollBg { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    /* HUD */
+    .hud { 
+      position: absolute; top: 15px; left: 0; width: 100%;
+      display: flex; justify-content: space-between; padding: 0 40px; z-index: 100;
+    }
+    .hud-label { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 8px; display: block; text-shadow: 0 2px 4px #000; }
+    
+    .bar-container { width: 220px; margin-bottom: 4px; }
+    .health-bar { height: 18px; background: rgba(0,0,0,0.8); border: 2px solid #475569; border-radius: 10px; overflow: hidden; }
+    .shield-bar { height: 8px; width: 220px; background: rgba(0,0,0,0.8); border: 1px solid #00ffff; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+    
+    .health-fill { height: 100%; transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .shield-fill { height: 100%; background: #00ffff; width: 100%; box-shadow: 0 0 15px #00ffff; }
+    
+    #marduk-health { background: linear-gradient(90deg, #16a34a, #4ade80); }
+    #tiamat-health { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+    /* Characters */
+    #marduk-player { position: absolute; width: 140px; height: 140px; z-index: 50; transition: top 0.05s linear; }
+    #marduk-player img {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 50%; 
+      border: 4px solid #ffd700;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+      transform: scaleX(-1) scale(1.4); 
+      background: #0f172a;
+      transition: all 0.2s ease;
+    }
+
+    #marduk-player.shield-active img {
+        border-color: #00ffff !important; 
+        box-shadow: 0 0 60px #00ffff, inset 0 0 30px #00ffff !important;
+    }
+    
+    #player-shield-aura {
+        position: absolute; top: -15px; left: -15px; width: 170px; height: 170px;
+        border-radius: 50%;
+        border: 2px solid #00ffff;
+        background: rgba(0, 255, 255, 0.15);
+        box-shadow: 0 0 40px #00ffff;
+        opacity: 0; transition: opacity 0.2s;
+        pointer-events: none;
+    }
+    #player-shield-aura.active { opacity: 1; }
+
+    #tiamat-boss { position: absolute; width: 320px; height: 320px; z-index: 50; transition: top 0.1s ease; }
+    #tiamat-boss img {
+      width: 100%; height: 100%; object-fit: contain;
+      mix-blend-mode: lighten; 
+      filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.4)) brightness(1.1);
+      transition: filter 1s ease;
+    }
+    #tiamat-boss.enraged img {
+        filter: sepia(1) saturate(6) hue-rotate(-50deg) drop-shadow(0 0 40px #ff0000) brightness(1.3);
+        animation: ragePulse 0.5s infinite alternate;
+    }
+    @keyframes ragePulse { from{transform:scale(1);} to{transform:scale(1.05);} }
+
+    .projectile { 
+      position: absolute; width: 50px; height: 50px; z-index: 40; 
+      display: flex; justify-content: center; align-items: center; font-size: 2.5rem; 
+      filter: drop-shadow(0 0 10px white);
+    }
+    .hit-flash { filter: brightness(10) sepia(1) hue-rotate(-50deg) saturate(5) !important; }
+    
+    .damage-text {
+      position: absolute; font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.8rem; color: #fff; 
+      text-shadow: 3px 3px 0 #000;
+      animation: floatUp 0.8s forwards; z-index: 200; pointer-events: none;
+    }
+    @keyframes floatUp { 0%{opacity:1; transform:translateY(0) scale(1);} 50%{transform:translateY(-30px) scale(1.2);} 100%{opacity:0; transform:translateY(-60px) scale(1);} }
+
+    /* Particles */
+    .particle {
+        position: absolute; width: 6px; height: 6px; background: #fbbf24; border-radius: 50%;
+        pointer-events: none; z-index: 100;
+        animation: particleFly 0.6s ease-out forwards;
+    }
+    @keyframes particleFly { 0% {opacity:1; transform: translate(0,0);} 100% {opacity:0; transform: translate(var(--tx), var(--ty));} }
+
+    /* --- LEVEL 2: CREATION --- */
+    #creation-viewport {
+      position: relative; width: 100%; height: 450px;
+      background: #020617; border-radius: 16px; overflow: hidden;
+      border: 3px solid #334155; margin-bottom: 25px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .layer { position: absolute; top:0; left:0; width:100%; height:100%; transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
+    
+    #layer-sky { background: linear-gradient(to bottom, #38bdf8 0%, #bae6fd 100%); z-index: 1; }
+    
+    #layer-water { 
+      top: auto; bottom: 0; height: 35%; 
+      background: linear-gradient(to bottom, #2563eb, #1e3a8a); 
+      transform: translateY(110%); transition: transform 2s ease-out; z-index: 5; opacity: 1;
+      border-top: 4px solid rgba(255,255,255,0.5);
+    }
+    
+    #layer-land {
+      top: auto; bottom: 0; height: 28%; width: 70%; left: 15%;
+      background: linear-gradient(to bottom, #16a34a, #14532d);
+      border-radius: 100% 100% 0 0; 
+      transform: translateY(110%); transition: transform 2s ease-out; z-index: 10; opacity: 1;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
+    }
+
+    #sun { position: absolute; top: 10%; right: 10%; width: 120px; height: 120px; background: #facc15; border-radius: 50%; box-shadow: 0 0 100px #eab308; transform: scale(0); transition: transform 2s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 2; opacity: 1; }
+    #moon { position: absolute; top: 15%; left: 10%; width: 70px; height: 70px; background: #f1f5f9; border-radius: 50%; box-shadow: 0 0 40px #cbd5e1; transform: scale(0); transition: transform 2s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 2; opacity: 1; }
+
+    #layer-entities { z-index: 20; pointer-events: none; opacity: 1; }
+    .entity { 
+      position: absolute; font-size: 3.5rem; transform: scale(0); 
+      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
+    }
+
+    /* FX Overlays */
+    #flash-overlay {
+      position: absolute; inset:0; background: white; z-index: 100;
+      opacity: 0; pointer-events: none; transition: opacity 1.5s ease-out;
+    }
+    #sabbath-overlay {
+      position: absolute; inset:0; z-index: 90;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.95), rgba(217, 119, 6, 0.6), transparent);
+      opacity: 0; pointer-events: none; transition: opacity 3s ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #sabbath-text {
+      font-family: 'Cinzel', serif; font-size: 5rem; color: #fff; font-weight: 900; 
+      text-shadow: 0 4px 30px rgba(146, 64, 14, 0.9);
+      transform: scale(0.8); transition: transform 3s ease;
+    }
+    #sabbath-overlay.active { opacity: 1; }
+    #sabbath-overlay.active #sabbath-text { transform: scale(1.1); }
+
+    /* --- LEVEL 3: PUZZLE --- */
+    .puzzle-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin: 25px 0; }
+    @media (max-width: 900px) { .puzzle-grid { grid-template-columns: repeat(3, 1fr); } }
+    
+    .day-slot {
+      background: rgba(15, 23, 42, 0.6); border: 2px dashed #475569; border-radius: 12px;
+      min-height: 120px; padding: 10px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 0.9rem; color: #94a3b8; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .day-slot.filled { 
+        border: 2px solid #ffd700; background: rgba(255, 215, 0, 0.15); color: #fff; 
+        transform: scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    .day-slot-header { font-family: 'Cinzel', serif; font-weight: bold; color: #fbbf24; text-transform: uppercase; font-size: 0.8rem; margin-bottom: 8px; }
+
+    .puzzle-buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 30px; }
+    .puzzle-btn {
+      background: #1e293b; border: 1px solid #475569; color: #e2e8f0;
+      padding: 14px 20px; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: bold;
+      box-shadow: 0 4px 0 #0f172a; transition: all 0.1s; font-family: 'Lato', sans-serif; text-transform: none;
+    }
+    .puzzle-btn:hover { background: #334155; transform: translateY(-2px); box-shadow: 0 6px 0 #0f172a; }
+    .puzzle-btn:active { transform: translateY(0); box-shadow: 0 2px 0 #0f172a; }
+    .puzzle-btn.used { opacity: 0.3; pointer-events: none; background: #0f172a; border-color: transparent; box-shadow: none; transform: scale(0.9); }
+    .puzzle-btn.shake { animation: shake 0.3s; background: #ef4444; border-color: #ef4444; color: white; }
+    @keyframes shake { 0%, 100% {transform:translateX(0);} 25% {transform:translateX(-5px);} 75% {transform:translateX(5px);} }
+
+    /* OVERLAYS & TRANSITIONS */
+    .overlay-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: none; align-items: center; justify-content: center; z-index: 200;
+      animation: fadeIn 0.5s ease-out;
+    }
+    .overlay-backdrop.active { display: flex; }
+
+    .overlay-card {
+      max-width: 1000px; width: 95%; background: radial-gradient(circle at top, #1e293b, #020617);
+      padding: 50px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+      text-align: center;
+    }
+    
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; text-align: left; }
+    @media (max-width: 768px) { .compare-grid { grid-template-columns: 1fr; } }
+    
+    .compare-col { background: rgba(255,255,255,0.03); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.3s; }
+    .compare-col:hover { transform: translateY(-5px); background: rgba(255,255,255,0.06); }
+    
+    .compare-tag { 
+        display: inline-block; background: #ffd700; color: #000; padding: 6px 12px; 
+        border-radius: 20px; font-weight: 900; font-size: 0.7rem; 
+        text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px;
+    }
+
+    /* NUCLEAR SPACING FIX: Forces browser to preserve spaces */
+    #verse-text {
+        white-space: pre-wrap !important; 
+        word-spacing: 0.1em;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-root">
+    
+    <section id="start-screen" class="screen active">
+      <div style="display:grid; grid-template-columns: 3fr 2fr; gap:40px; align-items:center;">
+        <div>
+          <h1>Creation Stories:<br><span class="accent">Enuma Elish</span> vs <span class="accent">Genesis 1</span></h1>
+          <p>
+            In the ancient Babylonian story <span class="accent">Enuma Elish</span>, the world is born from a violent cosmic war.
+            The storm-god <strong>Marduk</strong> slays the chaos dragon <strong>Tiamat</strong> and builds the universe from her corpse.
+          </p>
+          <p>
+            In <span class="accent">Genesis 1</span>, the imagery of deep waters remains, but the violence is gone.
+            God creates simply by <strong>speaking</strong>. There is no battle. The waters obey His voice.
+          </p>
+          <div style="background:rgba(255, 215, 0, 0.05); border:1px solid rgba(255, 215, 0, 0.3); padding:20px; border-radius:12px; margin-top:20px;">
+            <strong>Your Goal:</strong> First, experience the chaos of battle (Level 1). Then, witness the peace of divine creation (Level 2). Finally, restore the pattern (Level 3).
+          </div>
+          <div class="btn-row">
+            <button onclick="initAudio(); initLevel1()">Start the Game</button>
+          </div>
+        </div>
+        <div style="text-align:center; opacity:0.9;">
+          <div style="font-size:5rem; margin-bottom:15px; text-shadow: 0 0 30px rgba(255,255,255,0.2);">🌊⚔️✨</div>
+          <div style="font-family:'Cinzel'; font-size:1rem; text-transform:uppercase; letter-spacing:3px; color:#94a3b8; line-height: 2;">
+            Level 1: The Battle<br>
+            Level 2: The Word<br>
+            Level 3: The Order
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="level1-screen" class="screen">
+      <h2>Level 1: Creation by Violence</h2>
+      <p style="text-align:center; color:#94a3b8;">
+        Use <strong>Arrow Keys</strong> to fly. <strong>Spacebar</strong> to Attack.
+        <br><strong style="color:#00ffff">Hold SHIFT or Z for Divine Shield</strong>. (You cannot shoot while shielding).
+      </p>
+      
+      <div class="canvas-shell" id="level1-container">
+        <div class="hud">
+          <div style="width:40%">
+            <span class="hud-label" style="color:#4ade80;">MARDUK</span>
+            <div class="health-bar"><div id="marduk-health" class="health-fill" style="width:100%;"></div></div>
+            <div class="shield-bar"><div id="marduk-shield-bar" class="shield-fill"></div></div>
+          </div>
+          <div style="width:40%; text-align:right;">
+            <span class="hud-label" style="color:#f87171;">TIAMAT</span>
+            <div class="health-bar" style="margin-left:auto;"><div id="tiamat-health" class="health-fill" style="width:100%;"></div></div>
+          </div>
+        </div>
+
+        <div id="marduk-player">
+             <div id="player-shield-aura"></div>
+             <img src="marduk.png" id="m-img" alt="Marduk">
+        </div>
+        <div id="tiamat-boss"><img src="tiamat.png" id="t-img" alt="Tiamat"></div>
+      </div>
+      
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="winLevel1()">Skip Battle</button>
+      </div>
+    </section>
+
+    <div id="level1-victory-overlay" class="overlay-backdrop">
+      <div class="overlay-card">
+        <h2 style="color:#4ade80; margin-bottom:10px; font-size: 3rem;">CHAOS DEFEATED!</h2>
+        <div style="font-size:5rem; margin: 30px 0;">⚔️ ✅</div>
+        <p style="font-size: 1.3rem;">You just saw the violent creation of Enuma Elish. Now get ready for a different kind of creation: the non-violent creation of Genesis 1, where God creates through the Word...</p>
+        <div class="btn-row" style="margin-top:40px;">
+          <button onclick="startLevel2()">Begin Creation</button>
+        </div>
+      </div>
+    </div>
+
+    <section id="level2-screen" class="screen">
+      <h2>Level 2: Creation by Word</h2>
+      <p style="text-align:center; color:#94a3b8; max-width: 800px; margin: 0 auto 20px auto;">
+        Now, God speaks order into existence.
+      </p>
+      
+      <div id="creation-viewport">
+        <div id="flash-overlay"></div>
+        <div id="sabbath-overlay"><div id="sabbath-text">SABBATH REST</div></div>
+        
+        <div id="layer-sky" class="layer"></div>
+        <div id="sun"></div>
+        <div id="moon"></div>
+        <div id="layer-water" class="layer"></div>
+        <div id="layer-land" class="layer"></div>
+        <div id="layer-entities" class="layer"></div>
+      </div>
+
+      <div style="text-align:center; min-height: 80px; font-family: 'Cinzel', serif; font-style: italic; color: #ffd700; font-size:1.3rem; white-space: pre-wrap !important;" id="verse-text">
+        In the beginning, the earth was formless and empty...
+      </div>
+      <div class="btn-row">
+        <button id="speak-btn" onclick="nextDay()">“And God said…”</button>
+      </div>
+    </section>
+
+    <div id="level2-overlay" class="overlay-backdrop">
+      <div class="overlay-card">
+        <h2 style="color:#ffd700; margin-bottom:10px;">Two Creation Stories. Two Messages.</h2>
+        <p>Both Enuma Elish and Genesis 1 imagine a world that begins in watery chaos, however...</p>
+        
+        <div class="compare-grid">
+          <div class="compare-col">
+            <span class="compare-tag">Enuma Elish – Creation by Violence</span>
+            <p>The world begins with a cosmic brawl. Marduk blows Tiamat open and builds the universe from her broken body. Chaos is defeated by violence. Creation is the prize of a bloody war.</p>
+          </div>
+          <div class="compare-col">
+            <span class="compare-tag">Genesis – Creation by Word</span>
+            <p>Genesis keeps the chaos-waters and sea-monster background, but there is no explicit battle scene. God does not stab the sea. God calmly speaks, and the waters obey. Creation is an ordered gift, not a war trophy.</p>
+          </div>
+        </div>
+        
+        <div class="btn-row" style="margin-top:40px;">
+            <button onclick="startLevel3()">Proceed to Level 3</button>
+        </div>
+      </div>
+    </div>
+
+    <section id="level3-screen" class="screen">
+      <h2>Level 3: The Pattern of Creation</h2>
+      <p style="text-align:center; max-width:800px; margin:0 auto;">
+        Genesis 1 is highly structured. Days 1-3 (Forming) correspond to Days 4-6 (Filling).
+        <br><span class="accent" id="order-instruction" style="font-size:1.2rem; display:block; margin-top:10px;">Find the card for Day 1...</span>
+      </p>
+      
+      <div class="puzzle-grid" id="puzzle-grid"></div>
+      
+      <div class="puzzle-buttons" id="puzzle-buttons"></div>
+    </section>
+
+    <div id="final-overlay" class="overlay-backdrop">
+      <div class="overlay-card" style="max-width: 700px;">
+        <h2 style="color:#ffd700; margin-bottom:20px; font-size: 2.5rem;">The Meaning of the Story</h2>
+        
+        <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); margin: 20px 0; text-align: left;">
+            <span class="compare-tag">The Pattern & The Goal</span>
+            <p style="font-size: 1.1rem;">Six days come in a careful pattern of forming and filling. The unmatched seventh day is the climax: holy rest with God. Genesis quietly transforms an old sea-monster-fight idea into a peaceful vision of order, blessing, and Sabbath.</p>
+        </div>
+        
+        <div class="btn-row" style="margin-top:40px;">
+          <button onclick="location.reload()">Replay the Whole Game</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+    // --- AUDIO SYSTEM ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playTone(freq, type, duration) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    const sfx = {
+        shoot: () => playTone(300, 'square', 0.1),
+        hit: () => playTone(100, 'sawtooth', 0.2),
+        success: () => { playTone(600, 'sine', 0.1); setTimeout(()=>playTone(800, 'sine', 0.2), 100); },
+        error: () => playTone(150, 'sawtooth', 0.3),
+        win: () => { 
+            [400, 500, 600, 800].forEach((f, i) => setTimeout(() => playTone(f, 'square', 0.2), i*150));
+        }
+    };
+
+    function initAudio() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    // --- STATE MANAGEMENT ---
+    let state = {
+        level1: { 
+            active: false, 
+            bullets: [], 
+            marduk: {x:50, y:200, hp:600, max:600, shieldActive: false}, 
+            tiamat: {x:600, y:100, hp:1500, max:1500, dir:1, timer:0}, 
+            keys: {up:false, down:false, space:false, shield:false, cd:0} 
+        },
+        level2: { day: 0, speaking: false },
+        level3: { currentDay: 1 }
+    };
+    
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    // ==========================================
+    // LEVEL 1: DIAMOND BATTLE ENGINE
+    // ==========================================
+    const ARENA_H = 500; 
+    const ARENA_W = 1050; 
+
+    function initLevel1() {
+        showScreen('level1-screen');
+        state.level1.active = true;
+        state.level1.bullets = [];
+        state.level1.marduk.hp = 600;
+        state.level1.tiamat.hp = 1500;
+        document.getElementById('tiamat-boss').classList.remove('enraged');
+        updateHealthUI();
+        window.addEventListener('keydown', handleInput);
+        window.addEventListener('keyup', handleInputUp);
+        requestAnimationFrame(battleLoop);
+    }
+
+    function handleInput(e) {
+        if(e.key === 'ArrowUp') state.level1.keys.up = true;
+        if(e.key === 'ArrowDown') state.level1.keys.down = true;
+        if(e.key === ' ') state.level1.keys.space = true;
+        if(e.key === 'Shift' || e.key === 'z' || e.key === 'Z') state.level1.keys.shield = true;
+    }
+    function handleInputUp(e) {
+        if(e.key === 'ArrowUp') state.level1.keys.up = false;
+        if(e.key === 'ArrowDown') state.level1.keys.down = false;
+        if(e.key === ' ') state.level1.keys.space = false;
+        if(e.key === 'Shift' || e.key === 'z' || e.key === 'Z') state.level1.keys.shield = false;
+    }
+
+    function updateShieldLogic() {
+        const s = state.level1.marduk;
+        const k = state.level1.keys;
+        const playerContainer = document.getElementById('marduk-player');
+        const aura = document.getElementById('player-shield-aura');
+        if (k.shield) {
+            s.shieldActive = true;
+            aura.classList.add('active');
+            playerContainer.classList.add('shield-active');
+        } else {
+            s.shieldActive = false;
+            aura.classList.remove('active');
+            playerContainer.classList.remove('shield-active');
+        }
+    }
+
+    function battleLoop() {
+        if(!state.level1.active) return;
+        const s = state.level1;
+        updateShieldLogic();
+        
+        // Move
+        if(s.keys.up && s.marduk.y > 10) s.marduk.y -= 5;
+        if(s.keys.down && s.marduk.y < ARENA_H - 150) s.marduk.y += 5;
+        
+        // Shoot - BLOCKED IF SHIELDING
+        if(s.keys.space && s.keys.cd <= 0 && !s.marduk.shieldActive) {
+            spawnBullet(s.marduk.x + 100, s.marduk.y + 50, 'player');
+            sfx.shoot();
+            s.keys.cd = 20;
+        }
+        if(s.keys.cd > 0) s.keys.cd--;
+        
+        // Boss Logic
+        s.tiamat.y += 2 * s.tiamat.dir;
+        if(s.tiamat.y < 20 || s.tiamat.y > ARENA_H - 350) s.tiamat.dir *= -1;
+        // Boss Rage Color
+        if(s.tiamat.hp < 750) document.getElementById('tiamat-boss').classList.add('enraged');
+        
+        s.tiamat.timer++;
+        let rate = s.tiamat.hp < 750 ? 40 : 70; // Harder when red, but not triple fireballs
+        if(s.tiamat.timer > rate) {
+            spawnBullet(s.tiamat.x, s.tiamat.y + 150, 'enemy');
+            s.tiamat.timer = 0;
+        }
+
+        // Bullets
+        for(let i = s.bullets.length - 1; i >= 0; i--) {
+            let b = s.bullets[i];
+            b.x += b.type === 'player' ? 12 : -10;
+            b.el.style.left = b.x + 'px';
+            b.el.style.top = b.y + 'px';
+            
+            if(b.x < -50 || b.x > 1200) { b.el.remove(); s.bullets.splice(i,1); continue; }
+            
+            // Player Hits Boss
+            if(b.type === 'player' && checkCol(b, s.tiamat, 300)) {
+                b.el.remove(); s.bullets.splice(i,1);
+                s.tiamat.hp -= 10;
+                sfx.hit();
+                spawnDamageText(s.tiamat.x + 50, s.tiamat.y + 50, "-10");
+                flashHit('t-img');
+                spawnParticle(s.tiamat.x + 100, s.tiamat.y + 100); 
+                if(s.tiamat.hp <= 0) winLevel1();
+            } 
+            // Boss Hits Player
+            else if(b.type === 'enemy' && checkCol(b, s.marduk, 120)) {
+                b.el.remove(); s.bullets.splice(i,1);
+                // SHIELD CHECK - UNLIMITED
+                if (s.marduk.shieldActive) {
+                    spawnDamageText(s.marduk.x, s.marduk.y, "BLOCKED");
+                    sfx.error();
+                } else {
+                    s.marduk.hp -= 20;
+                    sfx.hit();
+                    flashHit('m-img');
+                    document.body.classList.add('shake-effect'); 
+                    setTimeout(()=>document.body.classList.remove('shake-effect'), 500);
+                    
+                    if(s.marduk.hp <= 0) {
+                        s.active = false; alert("Defeated. Try again."); initLevel1(); return;
+                    }
+                }
+            }
+        }
+        updateHealthUI();
+        document.getElementById('marduk-player').style.top = s.marduk.y + 'px';
+        document.getElementById('marduk-player').style.left = s.marduk.x + 'px';
+        document.getElementById('tiamat-boss').style.top = s.tiamat.y + 'px';
+        document.getElementById('tiamat-boss').style.left = s.tiamat.x + 'px';
+        requestAnimationFrame(battleLoop);
+    }
+
+    function spawnBullet(x, y, type) {
+        const el = document.createElement('div');
+        el.className = 'projectile';
+        el.innerText = type === 'player' ? '🔱' : '🔥';
+        el.style.left = x + 'px'; el.style.top = y + 'px';
+        document.getElementById('level1-container').appendChild(el);
+        state.level1.bullets.push({x, y, type, el});
+    }
+
+    function spawnParticle(x, y) {
+        for(let i=0; i<8; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = x + 'px'; p.style.top = y + 'px';
+            p.style.setProperty('--tx', (Math.random()*100 - 50) + 'px');
+            p.style.setProperty('--ty', (Math.random()*100 - 50) + 'px');
+            document.getElementById('level1-container').appendChild(p);
+            setTimeout(() => p.remove(), 600);
+        }
+    }
+
+    function checkCol(b, target, size) {
+        return b.x > target.x && b.x < target.x + size && b.y > target.y && b.y < target.y + size;
+    }
+
+    function flashHit(id) {
+        const el = document.getElementById(id);
+        el.classList.add('hit-flash');
+        setTimeout(() => el.classList.remove('hit-flash'), 100);
+    }
+
+    function spawnDamageText(x, y, txt) {
+        const d = document.createElement('div');
+        d.className = 'damage-text'; d.innerText = txt;
+        d.style.left = x + 'px'; d.style.top = y + 'px';
+        document.getElementById('level1-container').appendChild(d);
+        setTimeout(() => d.remove(), 800);
+    }
+
+    function updateHealthUI() {
+        document.getElementById('marduk-health').style.width = (state.level1.marduk.hp / state.level1.marduk.max * 100) + '%';
+        document.getElementById('tiamat-health').style.width = (state.level1.tiamat.hp / state.level1.tiamat.max * 100) + '%';
+    }
+
+    function winLevel1() {
+        state.level1.active = false;
+        state.level1.bullets.forEach(b => b.el.remove());
+        sfx.win();
+        document.getElementById('level1-victory-overlay').classList.add('active');
+    }
+
+    function startLevel2() {
+        document.getElementById('level1-victory-overlay').classList.remove('active');
+        initLevel2();
+    }
+
+    // ==========================================
+    // LEVEL 2: ANIMATED CREATION (Strings with explicit spaces)
+    // ==========================================
+    const creationDays = [
+        { text: "Day 1: 'Let there be light.'", action: () => { 
+            const f = document.getElementById('flash-overlay');
+            f.style.opacity = 1; 
+            sfx.success();
+            setTimeout(() => { f.style.opacity = 0; document.getElementById('creation-viewport').style.background = "#333"; }, 500);
+        }},
+        { text: "Day 2: Separate the waters from the waters.", action: () => { document.getElementById('layer-sky').style.opacity = 1; sfx.success(); }},
+        { text: "Day 3: Dry Land and Plants.", action: () => { 
+            document.getElementById('layer-land').style.transform = "translateY(0)"; 
+            document.getElementById('layer-water').style.transform = "translateY(0)"; 
+            sfx.success();
+            setTimeout(() => { spawnEntity('🌿', '20%', '65%'); spawnEntity('🌱', '60%', '65%'); }, 800);
+        }},
+        { text: "Day 4: Sun, Moon, and Stars.", action: () => { 
+            document.getElementById('sun').style.transform = "scale(1)"; 
+            document.getElementById('moon').style.transform = "scale(1)";
+            sfx.success();
+            setTimeout(() => { spawnEntity('✨', '10%', '10%'); spawnEntity('⭐', '50%', '15%'); spawnEntity('✨', '80%', '10%'); }, 500);
+        }},
+        { text: "Day 5: Creatures of sea and sky.", action: () => { sfx.success(); spawnEntity('🦅', '10%', '10%'); spawnEntity('🐟', '10%', '85%'); spawnEntity('🐋', '85%', '85%'); }},
+        { text: "Day 6: Humans and Land Animals.", action: () => { sfx.success(); spawnEntity('🦁', '20%', '75%'); setTimeout(()=>spawnEntity('🧍‍♂️🧍‍♀️', '50%', '65%'), 500); }},
+        { text: "Day 7: Shabbat Rest.", action: () => { sfx.win(); document.getElementById('sabbath-overlay').classList.add('active'); }}
+    ];
+
+    function initLevel2() {
+        showScreen('level2-screen');
+    }
+
+    function nextDay() {
+        if(state.level2.day >= creationDays.length || state.level2.speaking) {
+            // END OF LEVEL 2 TRIGGER
+            if(state.level2.day >= creationDays.length) {
+                document.getElementById('level2-overlay').classList.add('active');
+            }
+            return;
+        }
+        
+        state.level2.speaking = true;
+        const btn = document.getElementById('speak-btn');
+        btn.disabled = true;
+        
+        const d = creationDays[state.level2.day];
+        const box = document.getElementById('verse-text');
+        box.textContent = ""; 
+        let currentText = "";
+        let i = 0;
+        
+        // Typewriter Effect (Spaces Preserved)
+        let timer = setInterval(() => {
+            currentText += d.text.charAt(i);
+            box.textContent = currentText; 
+            i++;
+            if(i >= d.text.length) clearInterval(timer);
+        }, 30);
+
+        d.action();
+        state.level2.day++;
+
+        setTimeout(() => {
+            state.level2.speaking = false;
+            btn.disabled = false;
+            if(state.level2.day >= creationDays.length) btn.innerText = "Continue...";
+        }, 2500);
+    }
+
+    function spawnEntity(char, x, y) {
+        const el = document.createElement('div'); el.className = 'entity'; el.innerText = char;
+        el.style.left = x; el.style.top = y;
+        document.getElementById('layer-entities').appendChild(el);
+        setTimeout(() => el.style.transform = 'scale(1)', 50);
+    }
+
+    // ==========================================
+    // LEVEL 3: PUZZLE
+    // ==========================================
+    const puzzleItems = [
+        { day: 1, text: "Light Created" },
+        { day: 2, text: "Sky / Waters Separated" },
+        { day: 3, text: "Land & Plants" },
+        { day: 4, text: "Sun, Moon & Stars" },
+        { day: 5, text: "Birds & Fish" },
+        { day: 6, text: "Animals & Humans" },
+        { day: 7, text: "Sabbath Rest" }
+    ];
+
+    function startLevel3() {
+        document.getElementById('level2-overlay').classList.remove('active');
+        initLevel3();
+    }
+
+    function initLevel3() {
+        showScreen('level3-screen');
+        const grid = document.getElementById('puzzle-grid');
+        grid.innerHTML = '';
+        for(let i=1; i<=7; i++) {
+            grid.innerHTML += `
+                <div class="day-slot" id="slot-${i}">
+                    <div class="day-slot-header">Day ${i}</div>
+                    <div class="slot-content"></div>
+                </div>`;
+        }
+        const btnContainer = document.getElementById('puzzle-buttons');
+        btnContainer.innerHTML = '';
+        let shuffled = [...puzzleItems].sort(() => Math.random() - 0.5);
+        shuffled.forEach(item => {
+            const btn = document.createElement('button');
+            btn.className = 'puzzle-btn';
+            btn.innerText = item.text;
+            btn.onclick = () => checkPuzzle(item, btn);
+            btnContainer.appendChild(btn);
+        });
+    }
+
+    function checkPuzzle(item, btn) {
+        if(item.day === state.level3.currentDay) {
+            const slot = document.getElementById(`slot-${state.level3.currentDay}`);
+            slot.classList.add('filled');
+            slot.querySelector('.slot-content').innerText = item.text;
+            btn.classList.add('used');
+            sfx.success();
+            state.level3.currentDay++;
+            // END OF LEVEL 3 TRIGGER
+            if(state.level3.currentDay > 7) {
+                document.getElementById('order-instruction').innerText = "Pattern Complete!";
+                sfx.win();
+                // CONFETTI!
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                setTimeout(() => document.getElementById('final-overlay').classList.add('active'), 1500);
+            } else {
+                document.getElementById('order-instruction').innerText = `Find the card for Day ${state.level3.currentDay}...`;
+            }
+        } else {
+            btn.classList.add('shake');
+            sfx.error();
+            setTimeout(() => btn.classList.remove('shake'), 300);
+        }
+    }
+</script>
+</body>
+</html>

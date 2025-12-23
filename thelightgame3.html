@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Walking in the Light - Fixed</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@900&family=Orbitron:wght@500;900&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #FFD700; --danger: #FF0033; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'VT323', monospace; user-select: none; }
+        #cabinet { position: relative; width: 1100px; height: 800px; background: #000; border: 5px solid #333; border-radius: 20px; box-shadow: 0 0 50px rgba(255, 215, 0, 0.1); overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; outline: none; }
+        
+        /* UI */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        #faith-bar-container { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); width: 400px; height: 15px; border: 1px solid #555; border-radius: 10px; background: rgba(0,0,0,0.5); overflow: hidden; }
+        #faith-fill { width: 100%; height: 100%; background: linear-gradient(90deg, var(--danger), var(--gold)); transition: width 0.1s linear; }
+        #level-indicator { position: absolute; top: 30px; left: 30px; color: var(--gold); font-family: 'Orbitron', sans-serif; font-size: 1.5em; }
+
+        /* SCREENS */
+        .screen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            background: rgba(5,5,5,0.98); z-index: 20; 
+        }
+        
+        /* KEY FIX: Use display: none instead of opacity to prevent ghost clicks */
+        .screen.visible { display: flex !important; pointer-events: auto !important; }
+        .screen.hidden { display: none !important; pointer-events: none !important; }
+
+        #screen-intro { z-index: 100; }
+        h1 { color: var(--gold); font-family: 'Cinzel', serif; font-size: 4em; margin: 0; text-shadow: 0 0 30px var(--gold); text-align: center;}
+        h2 { color: var(--danger); font-family: 'Cinzel', serif; font-size: 3em; margin: 0; text-shadow: 0 0 30px red; }
+        p { color: #ccc; font-size: 1.4em; text-align: center; max-width: 700px; line-height: 1.6; margin-top: 20px; }
+        
+        /* Added z-index to buttons to ensure they sit above everything else in their container */
+        button { 
+            background: transparent; border: 2px solid var(--gold); color: var(--gold); 
+            padding: 15px 50px; font-family: 'Orbitron', sans-serif; font-size: 1.5em; 
+            cursor: pointer; margin-top: 40px; pointer-events: auto; 
+            transition: all 0.2s; position: relative; z-index: 1001; 
+        }
+        button:hover { background: var(--gold); color: #000; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+<audio id="bgMusic" loop>
+    <source src="Path_of_Light_2025-12-15T213139.mp3" type="audio/mpeg">
+</audio>
+
+<div id="cabinet">
+    <canvas id="gameCanvas" width="1100" height="800"></canvas>
+    
+    <div id="ui-layer">
+        <div id="level-indicator">LEVEL 1</div>
+        <div id="faith-bar-container"><div id="faith-fill"></div></div>
+    </div>
+
+    <div id="screen-intro" class="screen visible">
+        <p style="font-family: 'Cinzel', serif; font-size: 2.2em; color: #fff; font-style: italic;">
+            “For evil has no positive nature; but the loss of good has received the name evil."
+        </p>
+        <div style="color: var(--gold); margin-top: 20px;">— Saint Augustine</div>
+        <button id="btn-intro" type="button">ENTER</button>
+    </div>
+
+    <div id="screen-fail" class="screen hidden">
+        <h2>LOST IN DARKNESS</h2>
+        <p>The light is still there.</p>
+        <button id="btn-fail" type="button" style="border-color:var(--danger); color:var(--danger);">TRY AGAIN</button>
+    </div>
+
+    <div id="screen-win" class="screen hidden">
+        <h1 style="color:#fff;">PATH COMPLETE</h1>
+        <p style="color:var(--gold);">"Walk while you have the light."</p>
+        <button id="btn-win" type="button" style="color:#fff; border-color:#fff;">NEXT PATH</button>
+    </div>
+    
+    <div id="screen-final" class="screen hidden">
+        <h1 style="color:var(--gold);">JOURNEY COMPLETE</h1>
+        <button type="button" onclick="location.reload()">RESTART</button>
+    </div>
+</div>
+
+<script>
+// --- CONFIGURATION ---
+const LEVELS = [
+    { title: "LEVEL 1: THE CALL", speed: 60, radius: 200, bg: "#000000", waypoints: [{x: 100, y: 400}, {x: 550, y: 400}, {x: 1000, y: 400}] },
+    { title: "LEVEL 2: THE VALLEY", speed: 80, radius: 170, bg: "#000033", waypoints: [{x: 100, y: 100}, {x: 500, y: 700}, {x: 900, y: 100}, {x: 1000, y: 600}] },
+    { title: "LEVEL 3: THE WINDING ROAD", speed: 95, radius: 150, bg: "#330000", waypoints: [{x: 150, y: 150}, {x: 950, y: 150}, {x: 950, y: 650}, {x: 150, y: 650}, {x: 550, y: 400}] },
+    { title: "LEVEL 4: WALKING IN THE LIGHT", speed: 110, radius: 140, bg: "#333300", waypoints: [{x: 200, y: 200}, {x: 900, y: 150}, {x: 950, y: 650}, {x: 150, y: 650}, {x: 100, y: 350}, {x: 550, y: 400}, {x: 800, y: 500}, {x: 550, y: 100}] },
+    { title: "LEVEL 5: THE NARROW GATE", speed: 140, radius: 110, bg: "#111111", waypoints: [{x: 100, y: 700}, {x: 300, y: 100}, {x: 500, y: 700}, {x: 700, y: 100}, {x: 900, y: 700}, {x: 1000, y: 400}] }
+];
+
+const PLAYER_SPEED = 280; 
+const DAMAGE_RATE = 30;   
+const HEAL_RATE = 40;     
+
+// --- VARIABLES ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width; const H = canvas.height;
+
+// STATE MANAGEMENT (Fix for clicking bug)
+const STATES = { INTRO: 'intro', PLAYING: 'playing', WIN: 'win', FAIL: 'fail', FINAL: 'final' };
+let currentState = STATES.INTRO;
+
+let currentLevelIdx = 0;
+let player = { x: 0, y: 0, size: 10 };
+let light = { x: 0, y: 0 };
+let faith = 100;
+let shadows = [];
+let keys = {};
+let nextWaypointIndex = 0;
+let currentLevel = null;
+let lastTime = 0;
+let levelIntroTimer = 0;
+let audioCtx = null;
+
+// --- MUSIC LOGIC ---
+function startAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    bgMusic.volume = 0.5;
+    bgMusic.play().catch(e => console.log("Audio play failed (user interaction needed)", e));
+    
+    // SFX Engine
+    if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+    }
+}
+
+function playTone(freq, type) {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+}
+
+// --- GAME LOOP ---
+function update(dt) {
+    if(currentState !== STATES.PLAYING) return;
+    
+    if(levelIntroTimer > 0) levelIntroTimer -= dt;
+
+    // Player
+    let dx = 0, dy = 0;
+    if(keys['ArrowUp']) dy = -1; if(keys['ArrowDown']) dy = 1;
+    if(keys['ArrowLeft']) dx = -1; if(keys['ArrowRight']) dx = 1;
+    if(dx!=0 || dy!=0) { let l = Math.sqrt(dx*dx+dy*dy); dx/=l; dy/=l; }
+    player.x += dx * PLAYER_SPEED * dt;
+    player.y += dy * PLAYER_SPEED * dt;
+    player.x = Math.max(10, Math.min(W-10, player.x));
+    player.y = Math.max(10, Math.min(H-10, player.y));
+
+    // Light
+    let t = currentLevel.waypoints[nextWaypointIndex];
+    let pdx = t.x - light.x, pdy = t.y - light.y;
+    let dist = Math.sqrt(pdx*pdx + pdy*pdy);
+    
+    if(dist < 10) {
+        nextWaypointIndex++;
+        if(nextWaypointIndex >= currentLevel.waypoints.length) winLevel();
+    } else {
+        light.x += (pdx/dist) * currentLevel.speed * dt;
+        light.y += (pdy/dist) * currentLevel.speed * dt;
+    }
+
+    // Faith
+    let d = Math.sqrt((player.x - light.x)**2 + (player.y - light.y)**2);
+    if(d > currentLevel.radius) {
+        faith -= DAMAGE_RATE * dt;
+        if(Math.random()>0.9) spawnShadow();
+    } else {
+        faith += HEAL_RATE * dt;
+    }
+    faith = Math.max(0, Math.min(100, faith));
+    document.getElementById('faith-fill').style.width = faith + "%";
+    if(faith <= 0) loseLevel();
+
+    // Shadows
+    shadows.forEach(s => {
+        let a = Math.atan2(player.y - s.y, player.x - s.x);
+        s.x += Math.cos(a) * s.speed * dt; s.y += Math.sin(a) * s.speed * dt;
+        s.life -= dt;
+    });
+    shadows = shadows.filter(s => s.life > 0);
+}
+
+function spawnShadow() {
+    let a = Math.random() * 6.28;
+    let r = currentLevel.radius + 60;
+    shadows.push({x: player.x + Math.cos(a)*r, y: player.y + Math.sin(a)*r, speed: 100, life: 1.5});
+    if(Math.random()>0.8) playTone(100, 'sawtooth');
+}
+
+function draw() {
+    ctx.fillStyle = currentLevel ? currentLevel.bg : '#000';
+    ctx.fillRect(0,0,W,H);
+
+    // Light Mask
+    if(currentState === STATES.PLAYING || currentState === STATES.WIN || currentState === STATES.FAIL) {
+        ctx.globalCompositeOperation = 'destination-out';
+        let g = ctx.createRadialGradient(light.x, light.y, 10, light.x, light.y, currentLevel.radius);
+        g.addColorStop(0, 'white'); g.addColorStop(1, 'transparent');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(light.x, light.y, currentLevel.radius, 0, 6.28); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Objects
+        ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(light.x, light.y, 10, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#0ff'; ctx.beginPath(); ctx.arc(player.x, player.y, 10, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#500'; shadows.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, 6.28); ctx.fill(); });
+
+        // Vignette
+        if(faith < 40) {
+            ctx.strokeStyle = `rgba(100,0,0,${1-faith/40})`; ctx.lineWidth = 50; ctx.strokeRect(0,0,W,H);
+        }
+        
+        // Level Title
+        if(levelIntroTimer > 0) {
+            ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0,H/2-60,W,120);
+            ctx.fillStyle = "#FFD700"; ctx.font = "60px Cinzel"; ctx.textAlign = "center";
+            ctx.fillText(currentLevel.title, W/2, H/2+20);
+        }
+    }
+}
+
+function loop(ts) {
+    let dt = (ts-lastTime)/1000; if(dt>0.1) dt=0.1; lastTime=ts;
+    update(dt); draw(); requestAnimationFrame(loop);
+}
+
+// --- STATE MANAGEMENT ---
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => {s.classList.remove('visible'); s.classList.add('hidden');});
+    if(id) { let el = document.getElementById(id); el.classList.remove('hidden'); el.classList.add('visible'); }
+}
+
+function startLevel(idx) {
+    currentState = STATES.PLAYING; // STRICT STATE
+    currentLevelIdx = idx;
+    currentLevel = LEVELS[currentLevelIdx];
+    document.getElementById('level-indicator').innerText = `LEVEL ${currentLevelIdx + 1}`;
+    
+    faith = 100; shadows = []; nextWaypointIndex = 0; levelIntroTimer = 3.0;
+    
+    // Position Reset
+    light.x = currentLevel.waypoints[0].x; light.y = currentLevel.waypoints[0].y;
+    player.x = light.x; player.y = light.y + 50;
+    
+    keys = {}; // Clear keys so player doesn't run into walls automatically
+    
+    showScreen(null); // Hide menu, show game
+}
+
+function loseLevel() { 
+    currentState = STATES.FAIL; 
+    playTone(100, 'sawtooth'); 
+    showScreen('screen-fail'); 
+}
+
+function winLevel() { 
+    currentState = STATES.WIN; 
+    playTone(400, 'sine'); 
+    showScreen('screen-win'); 
+}
+
+// --- CONTROLS ---
+window.onkeydown = e => keys[e.code] = true;
+window.onkeyup = e => keys[e.code] = false;
+
+// Prevent random canvas clicks from doing anything
+canvas.onclick = (e) => { e.stopPropagation(); e.preventDefault(); };
+
+document.getElementById('btn-intro').onclick = function(e) {
+    e.preventDefault();
+    if (currentState !== STATES.INTRO) return; 
+    this.blur(); 
+    startAudio(); 
+    startLevel(0); 
+};
+
+document.getElementById('btn-fail').onclick = function(e) { 
+    e.preventDefault();
+    if (currentState !== STATES.FAIL) return;
+    this.blur();
+    startLevel(currentLevelIdx); 
+};
+
+document.getElementById('btn-win').onclick = function(e) {
+    e.preventDefault();
+    if (currentState !== STATES.WIN) return;
+    this.blur();
+    
+    let nextIdx = currentLevelIdx + 1;
+    if(nextIdx >= LEVELS.length) {
+        currentState = STATES.FINAL;
+        showScreen('screen-final');
+    } else {
+        startLevel(nextIdx);
+    }
+};
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

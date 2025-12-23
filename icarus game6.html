@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Salvation History: Level 2 - The Presumption</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@900&family=Orbitron:wght@500;900&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --gold: #FFD700; 
+            --sky-blue: #87CEEB;
+            --deep-blue: #000080;
+            --sun-burn: #FF4500;
+            --glass: rgba(10, 15, 20, 0.95); 
+        }
+        body { 
+            margin: 0; 
+            background: #050505; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; 
+            font-family: 'VT323', monospace; 
+            user-select: none; 
+        }
+        #cabinet { 
+            position: relative; 
+            width: 1100px; 
+            height: 800px; 
+            background: #111; 
+            border: 5px solid #222;
+            border-radius: 20px; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+            background: linear-gradient(to bottom, var(--sky-blue), #fff); 
+        }
+        
+        .ui-layer { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            background: var(--glass); z-index: 60; 
+            transition: opacity 2s ease-in;
+            padding: 40px; box-sizing: border-box;
+        }
+        .hidden { opacity: 0; pointer-events: none; }
+        .fade-hidden { opacity: 0; transition: opacity 1.5s ease-in; }
+        .fade-visible { opacity: 1; pointer-events: auto; }
+        
+        h1 { 
+            font-family: 'Cinzel', serif; font-size: 3.5em; color: var(--gold); 
+            text-shadow: 0 0 20px var(--gold); margin-bottom: 20px; text-align: center;
+        }
+        
+        .quote-container {
+            border-left: 3px solid var(--sky-blue); padding-left: 20px; margin-bottom: 30px;
+            max-width: 800px; min-height: 120px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .quote-text { font-family: 'Cinzel', serif; color: #fff; font-size: 1.5em; font-style: italic; line-height: 1.4; }
+        .citation {
+            color: var(--sky-blue); font-size: 0.8em; font-family: 'Orbitron', sans-serif;
+            margin-top: 15px; display: block; opacity: 0; transition: opacity 1s;
+        }
+        .citation.show { opacity: 1; }
+
+        #mission-text { 
+            color: #ccc; font-size: 1.2em; max-width: 700px; text-align: center; 
+            line-height: 1.5; margin-bottom: 20px;
+        }
+        
+        button { 
+            margin-top: 20px; background: transparent; color: var(--sky-blue); 
+            font-family: 'Orbitron', sans-serif; font-size: 1.5em; 
+            padding: 15px 50px; border: 2px solid var(--sky-blue); 
+            cursor: pointer; text-transform: uppercase; 
+            box-shadow: 0 0 10px var(--sky-blue); transition: all 0.2s;
+        }
+        button:hover { background: var(--sky-blue); color: #000; box-shadow: 0 0 30px var(--sky-blue); }
+
+        #hud {
+            position: absolute; top: 20px; left: 30px; 
+            color: #222; font-size: 24px; pointer-events: none;
+            font-family: 'Orbitron', sans-serif; z-index: 50; font-weight: bold;
+            text-shadow: 0 0 5px white;
+        }
+        
+        #fail-title { color: var(--sun-burn); text-shadow: 0 0 20px red; }
+    </style>
+</head>
+<body>
+
+<div id="cabinet">
+    <canvas id="gameCanvas" width="1100" height="800"></canvas>
+    
+    <div id="hud">
+        DIST: <span id="dist-display">0</span>m &nbsp;|&nbsp; 
+        GRACE: <span id="score-display" style="color:#006400">0</span>
+    </div>
+
+    <div id="screen-start" class="ui-layer">
+        <h1>THE PRESUMPTION</h1>
+        <div class="quote-container">
+            <span id="quote-target" class="quote-text"></span>
+            <span id="citation-target" class="citation">- POPE BENEDICT XVI -</span>
+        </div>
+        <div id="mission-group" class="fade-hidden">
+            <div id="mission-text">
+                The Serpent promised that if you rejected God's limits, you would be free to fly. This is the lie of <strong>Autonomy</strong>.
+                <br><br>
+                Avoid the clouds of <strong>PRIDE</strong> and <strong>EGO</strong>.
+                <br>Collect the <strong>Sparks of Grace</strong> to sustain your soul.
+                <br><br>
+                <strong>MISSION:</strong> Navigate the Middle Path of Humility.
+                <br><strong>CONTROLS:</strong> Tap <span style="color:var(--gold)">SPACEBAR</span> to Flap.
+            </div>
+            <button onclick="startGame()">TAKE FLIGHT</button>
+        </div>
+    </div>
+
+    <div id="screen-fail" class="ui-layer hidden">
+        <h1 id="fail-title">FAILED</h1>
+        <p id="fail-msg" style="text-align: center; font-size: 1.5em; color: #ccc; margin-bottom: 30px;">
+            You were consumed by Pride.
+        </p>
+        <button style="border-color: var(--sun-burn); color: var(--sun-burn);" onclick="location.reload()">TRY AGAIN</button>
+    </div>
+
+    <div id="screen-win" class="ui-layer hidden">
+        <h1 style="color: var(--gold); text-shadow: 0 0 30px white;">GRACE SUSTAINS YOU</h1>
+        <p style="text-align: center; max-width: 700px; font-size: 1.4em; color: #ccc;">
+            "My grace is sufficient for you, for my power is made perfect in weakness."
+            <br><br>
+            True freedom is not found in flying alone, but in resting in the Hand of God.
+        </p>
+        <button onclick="location.reload()">PLAY AGAIN?</button>
+    </div>
+</div>
+
+<script>
+/**
+ * LEVEL 2: THE PRESUMPTION (Fixed Audio Filename)
+ */
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+// --- CONFIG ---
+const IMAGE_SRC = 'soul.png'; 
+// UPDATED: Using the exact filename you uploaded
+const MUSIC_SRC = 'Icarus_Serene_Flight_2025-12-14T144744.mp3'; 
+const QUOTE_TEXT = '"Man’s real sin is the arrogant presumption of autonomy... the desire to be one’s own master, independent of God."';
+const GOAL_DISTANCE = 8000; 
+const HAZARD_WORDS = ["HUBRIS", "PRIDE", "EGO", "VANITY", "AUTONOMY", "SELF", "POWER", "FAME"];
+
+// --- STATE ---
+let running = false;
+let physicsStarted = false; 
+let endingPhase = 0; 
+let distance = 0;
+let graceScore = 0; 
+let frameCount = 0;
+let player = { x: 150, y: H/2, r: 20, dy: 0, rotation: 0 };
+let obstacles = []; 
+let collectibles = []; 
+let bgClouds = []; 
+let keys = {};
+let shake = 0;
+let handY = H + 300; 
+
+// Physics
+const GRAVITY = 0.25; 
+const LIFT = -6;      
+const SPEED = 4;     
+
+// Assets
+const soulImg = new Image();
+soulImg.src = IMAGE_SRC;
+
+const bgMusic = new Audio(MUSIC_SRC);
+bgMusic.loop = true;
+bgMusic.volume = 1.0; // Max volume to ensure it's audible
+
+const AudioSys = {
+    ctx: new (window.AudioContext || window.webkitAudioContext)(),
+    playTone: function(freq, type, dur, vol=0.1) {
+        if(this.ctx.state === 'suspended') this.ctx.resume();
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = type; o.frequency.value = freq;
+        g.gain.setValueAtTime(vol, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(); o.stop(this.ctx.currentTime + dur);
+    }
+};
+
+// --- INITIALIZATION ---
+function init() {
+    for(let i=0; i<8; i++) {
+        bgClouds.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            w: 100 + Math.random() * 100,
+            speed: 0.5 + Math.random() * 1
+        });
+    }
+
+    window.addEventListener('keydown', e => {
+        if(e.code === 'Space') {
+            keys[e.code] = true;
+            if(running && !physicsStarted) {
+                physicsStarted = true;
+                jump();
+            } else {
+                jump();
+            }
+        }
+        if(e.shiftKey && e.key === '2') distance = GOAL_DISTANCE - 200; 
+        if(['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
+    });
+
+    typeWriter(QUOTE_TEXT, 'quote-target', 40);
+    requestAnimationFrame(loop);
+}
+
+function typeWriter(text, elementId, speed) {
+    const el = document.getElementById(elementId);
+    el.innerHTML = "";
+    let i = 0;
+    function type() {
+        if (i < text.length) {
+            el.innerHTML += text.charAt(i);
+            if(i % 3 === 0) AudioSys.playTone(600, 'sine', 0.05, 0.02);
+            i++;
+            setTimeout(type, speed);
+        } else {
+            document.getElementById('citation-target').classList.add('show');
+            setTimeout(() => { document.getElementById('mission-group').classList.add('fade-visible'); }, 1000);
+        }
+    }
+    type();
+}
+
+function startGame() {
+    // FORCE RESET PLAYER STATE
+    player.y = H/2 - 100;
+    player.dy = 0;
+    player.rotation = 0;
+    obstacles = [];
+    collectibles = [];
+    frameCount = 0;
+    distance = 0;
+    graceScore = 0;
+    physicsStarted = false; 
+    
+    document.getElementById('screen-start').classList.add('hidden');
+    running = true;
+    AudioSys.ctx.resume();
+    AudioSys.playTone(440, 'sine', 0.5);
+    
+    // Play Background Music with Error Check
+    bgMusic.play().catch(e => {
+        console.log("Music failed:", e);
+        alert("Audio Error: Could not play '" + MUSIC_SRC + "'. Check the filename matches exactly!");
+    });
+}
+
+// --- LOGIC ---
+
+function jump() {
+    if(!running || endingPhase > 0) return; 
+    player.dy = LIFT;
+    AudioSys.playTone(300, 'square', 0.1, 0.1);
+}
+
+function update() {
+    if(!running) return;
+
+    // --- HOVER MODE (Before First Jump) ---
+    if(!physicsStarted) {
+        player.y = (H/2 - 100) + Math.sin(Date.now() / 300) * 10;
+        player.rotation = 0;
+        bgClouds.forEach(c => {
+            c.x -= c.speed;
+            if(c.x + c.w < 0) { c.x = W; c.y = Math.random() * H; }
+        });
+        return; 
+    }
+
+    // --- NORMAL GAMEPLAY ---
+
+    if(distance >= GOAL_DISTANCE && endingPhase === 0) {
+        endingPhase = 1; 
+        obstacles = []; 
+        collectibles = [];
+        AudioSys.playTone(440, 'sine', 2.0); 
+    }
+
+    if(endingPhase === 1) {
+        // Phase 1: The Surrender
+        player.dy += 0.1; 
+        player.y += player.dy;
+        player.rotation += 0.05; 
+        handY -= 3;
+        if(handY < H - 150) handY = H - 150;
+        if(player.y > H - 250) {
+            endingPhase = 2;
+            AudioSys.playTone(220, 'sine', 3.0); 
+            AudioSys.playTone(440, 'sine', 3.0); 
+            AudioSys.playTone(660, 'sine', 3.0); 
+        }
+    } 
+    else if (endingPhase === 2) {
+        // Phase 2: Caught
+        let targetX = W/2;
+        let targetY = handY + 60;
+        player.x += (targetX - player.x) * 0.1;
+        player.y += (targetY - player.y) * 0.1;
+        player.rotation *= 0.9; 
+        if(Math.abs(player.y - targetY) < 5) {
+            setTimeout(() => {
+                document.getElementById('screen-win').classList.remove('hidden');
+            }, 1000);
+        }
+    }
+    else {
+        player.dy += GRAVITY;
+        player.y += player.dy;
+        player.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (player.dy * 0.1)));
+
+        frameCount++;
+        
+        // Spawn Obstacles
+        if(frameCount % 90 === 0) { 
+            let word = HAZARD_WORDS[Math.floor(Math.random() * HAZARD_WORDS.length)];
+            let cloudY = Math.random() * (H - 300) + 150; 
+            obstacles.push({ x: W, y: cloudY, text: word, w: 120, h: 60 });
+        }
+
+        // Spawn Collectibles (Grace)
+        if(frameCount % 130 === 0) {
+            let gy = Math.random() * (H - 200) + 100;
+            collectibles.push({ x: W, y: gy, r: 10, taken: false });
+        }
+
+        // Update Obstacles
+        for(let i = obstacles.length - 1; i >= 0; i--) {
+            let ob = obstacles[i];
+            ob.x -= SPEED;
+            if(player.x + 5 > ob.x && player.x - 5 < ob.x + ob.w &&
+               player.y + 5 > ob.y && player.y - 5 < ob.y + ob.h) {
+                fail("Consumed by " + ob.text);
+            }
+            if(ob.x + ob.w < 0) obstacles.splice(i, 1);
+        }
+
+        // Update Collectibles
+        for(let i = collectibles.length - 1; i >= 0; i--) {
+            let c = collectibles[i];
+            c.x -= SPEED;
+            
+            // Collection
+            if(!c.taken && dist(player.x, player.y, c.x, c.y) < 30) {
+                c.taken = true;
+                graceScore += 500;
+                AudioSys.playTone(880, 'sine', 0.1); // High pitch ding
+                AudioSys.playTone(1100, 'sine', 0.1);
+            }
+            if(c.x < -20 || c.taken) collectibles.splice(i, 1);
+        }
+
+        if(player.y < 30) fail("Burned by Ambition (Too High).");
+        if(player.y > H - 30) fail("Lost in Despair (Too Low).");
+
+        distance += SPEED;
+        document.getElementById('dist-display').innerText = Math.floor(distance);
+        document.getElementById('score-display').innerText = graceScore;
+    }
+
+    bgClouds.forEach(c => {
+        c.x -= c.speed;
+        if(c.x + c.w < 0) { c.x = W; c.y = Math.random() * H; }
+    });
+}
+
+function fail(reason) {
+    running = false;
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+    shake = 20;
+    AudioSys.playTone(100, 'sawtooth', 0.5);
+    document.getElementById('fail-msg').innerText = reason;
+    document.getElementById('screen-fail').classList.remove('hidden');
+}
+
+// --- RENDERING ---
+
+function draw() {
+    let g = ctx.createLinearGradient(0, 0, 0, H);
+    if(endingPhase > 0) {
+        g.addColorStop(0, '#FFFACD'); g.addColorStop(1, '#FFD700'); 
+    } else {
+        g.addColorStop(0, '#FF4500'); g.addColorStop(0.2, '#87CEEB'); 
+        g.addColorStop(0.8, '#87CEEB'); g.addColorStop(1, '#000080'); 
+    }
+    
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.save();
+    if(shake > 0) {
+        ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
+        shake *= 0.9; if(shake < 0.5) shake = 0;
+    }
+
+    // BG Clouds
+    ctx.fillStyle = endingPhase > 0 ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0.4)";
+    bgClouds.forEach(c => { drawCloudShape(c.x, c.y, c.w, 50); });
+
+    // Game Objects
+    if(endingPhase === 0) {
+        // Collectibles
+        collectibles.forEach(c => {
+            ctx.shadowBlur = 10; ctx.shadowColor = "gold";
+            ctx.fillStyle = "#FFD700";
+            ctx.beginPath(); ctx.arc(c.x, c.y, 10, 0, Math.PI*2); ctx.fill();
+            // Cross shape
+            ctx.fillStyle = "#FFF";
+            ctx.fillRect(c.x-2, c.y-7, 4, 14);
+            ctx.fillRect(c.x-5, c.y-2, 10, 4);
+            ctx.shadowBlur = 0;
+        });
+
+        // Obstacles
+        obstacles.forEach(ob => {
+            ctx.fillStyle = "#fff";
+            drawCloudShape(ob.x, ob.y, ob.w, ob.h);
+            ctx.fillStyle = "#222";
+            ctx.font = "bold 20px 'Cinzel'";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(ob.text, ob.x + ob.w/2, ob.y + ob.h/2);
+        });
+        
+        ctx.font = "20px 'Orbitron'";
+        ctx.textAlign = "left";
+        ctx.fillStyle = "rgba(255, 69, 0, 0.5)"; ctx.fillText("PRIDE (SUN)", W/2 - 60, 30);
+        ctx.fillStyle = "rgba(0, 0, 128, 0.5)"; ctx.fillText("DESPAIR (ABYSS)", W/2 - 80, H - 15);
+    }
+
+    // PRESS SPACE HINT
+    if(running && !physicsStarted) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.font = "30px 'Orbitron'";
+        ctx.textAlign = "center";
+        ctx.fillText("PRESS SPACE TO FLY", W/2, H/2 + 80);
+    }
+
+    if(endingPhase > 0) {
+        ctx.fillStyle = "#FFD700"; 
+        ctx.shadowBlur = 50; ctx.shadowColor = "white";
+        ctx.beginPath();
+        ctx.moveTo(W/2 - 150, handY);
+        ctx.bezierCurveTo(W/2 - 100, handY + 150, W/2 + 100, handY + 150, W/2 + 150, handY);
+        ctx.lineTo(W/2 + 150, H);
+        ctx.lineTo(W/2 - 150, H);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.rotation);
+
+    if(soulImg.complete && soulImg.naturalWidth > 0) {
+        ctx.drawImage(soulImg, -25, -25, 50, 50);
+    } else {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.beginPath(); ctx.ellipse(-10, -5, 20, 10, -0.2, 0, Math.PI*2); ctx.ellipse(10, -5, 20, 10, 0.2, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 15; ctx.shadowColor = "gold";
+        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    ctx.restore();
+}
+
+function drawCloudShape(x, y, w, h) {
+    ctx.beginPath();
+    ctx.arc(x + 20, y + h/2, h/2, 0, Math.PI*2);
+    ctx.arc(x + w - 20, y + h/2, h/2, 0, Math.PI*2);
+    ctx.arc(x + w/2, y + h/2 - 10, h/1.5, 0, Math.PI*2);
+    ctx.fill();
+}
+
+function dist(x1,y1,x2,y2) { return Math.sqrt((x1-x2)**2+(y1-y2)**2); }
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+let lastTime = 0;
+init();
+
+</script>
+</body>
+</html>
