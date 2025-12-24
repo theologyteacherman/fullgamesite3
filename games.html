@@ -1,59 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Jacobs Games Hub</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/webp" href="favicon.webp">
+  <meta charset="UTF-8" />
+  <title>Jacobs Games Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/webp" href="favicon.webp" />
 
-<style>
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    background: #05060b;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #05060b;
+      font-family: Arial, sans-serif;
+    }
 
-#game-frame {
-    width: 100vw;
-    height: 100vh;
-    border: none;
-}
+    #hubFrame {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      border: 0;
+      display: block;
+      background: #05060b;
+    }
 
-#back-btn {
-    position: fixed;
-    top: 16px;
-    left: 16px;
-    z-index: 1000;
-    padding: 8px 14px;
-    border-radius: 999px;
-    background: rgba(20, 25, 45, 0.85);
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-    letter-spacing: 0.3px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-    backdrop-filter: blur(6px);
-    transition: background 0.2s ease, transform 0.2s ease;
-}
+    .controls {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 9999;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
 
-#back-btn:hover {
-    background: rgba(40, 55, 95, 0.95);
-    transform: translateY(-1px);
-}
-</style>
+    .btn {
+      appearance: none;
+      border: 0;
+      text-decoration: none;
+      cursor: pointer;
+      color: #fff;
+      background: rgba(20, 25, 45, 0.86);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+
+    .btn:hover {
+      background: rgba(40, 55, 95, 0.95);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0px);
+    }
+
+    .btn.secondary {
+      font-weight: 700;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 520px) {
+      .controls { top: 10px; left: 10px; }
+      .btn { padding: 9px 12px; font-size: 13px; }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="controls">
+    <button class="btn" id="backHub" type="button" title="Back to the Jacobs Games Hub home">
+      ← <span>Games Hub</span>
+    </button>
+    <a class="btn secondary" id="backSite" href="index.html" title="Back to The Jacobs Theology Show">
+      ↩ <span>Site</span>
+    </a>
+  </div>
 
-<a id="back-btn" href="index.html">← Back to The Jacobs Theology Show</a>
-
-<iframe 
-    id="game-frame" 
+  <iframe
+    id="hubFrame"
     src="Jacobs_Games_Hub_INDEX_LOCKED_CANONICAL_WITH_LIGHT_EMOJI_DEFINITION.html"
-    allowfullscreen>
-</iframe>
+    title="Jacobs Games Hub">
+  </iframe>
 
+  <script>
+    const hubHome = "Jacobs_Games_Hub_INDEX_LOCKED_CANONICAL_WITH_LIGHT_EMOJI_DEFINITION.html";
+    const frame = document.getElementById('hubFrame');
+    const backHub = document.getElementById('backHub');
+    const backSite = document.getElementById('backSite');
+
+    function currentFile(){
+      try {
+        const url = new URL(frame.contentWindow.location.href);
+        return (url.pathname.split('/').pop() || '');
+      } catch (e) {
+        return hubHome;
+      }
+    }
+
+    function refreshButtons(){
+      const file = currentFile();
+      const onHubHome = (file === hubHome);
+
+      // Always let them go back to the hub.
+      backHub.style.display = 'inline-flex';
+
+      // Only show "Back to Site" on the hub home.
+      backSite.style.display = onHubHome ? 'inline-flex' : 'none';
+    }
+
+    backHub.addEventListener('click', () => {
+      frame.src = hubHome;
+      // After returning to the hub home, show the Site button again.
+      setTimeout(refreshButtons, 50);
+    });
+
+    frame.addEventListener('load', refreshButtons);
+    refreshButtons();
+  </script>
 </body>
 </html>
