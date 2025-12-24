@@ -2,45 +2,330 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Jacobs Games Hub</title>
+<title>Games | The Jacobs Theology Show</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="favicon.webp">
+<link rel="icon" type="image/webp" href="favicon.webp">
+
 <style>
+
+
+
+/* CURSOR (known-good): cat cursor everywhere, including clickable elements */
+html, body {
+  cursor: url("cat_cursor.png") 16 16, auto;
+}
+a, button, .card, .card * {
+  cursor: url("cat_cursor.png") 16 16, pointer;
+}
+
 body {
   margin: 0;
-  background: #0b1020;
-  color: #fff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: radial-gradient(1200px 600px at top, #0b1533 0%, #050b1a 40%, #020617 100%);
+  color: #e8ecf4;
 }
-.topbar {
-  display: flex;
-  gap: 12px;
-  padding: 16px;
-}
-.btn {
-  background: linear-gradient(145deg, #1b2340, #0f152b);
+
+a { text-decoration: none; color: inherit; }
+
+header {
+  max-width: 1100px;
+  margin: 40px auto 30px;
+  padding: 20px 26px;
+  background: #fff;
+  color: #111;
   border-radius: 14px;
-  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.35);
+}
+
+header img { width: 56px; height: 56px; }
+
+main {
+  max-width: 1100px;
+  margin: 0 auto 80px;
+  padding: 0 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  background: linear-gradient(180deg, #0b1533, #070e24);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.45);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 45px rgba(0,0,0,.6);
+}
+
+.badge { font-size: 22px; margin-bottom: 8px; }
+.card h3 { margin: 0 0 6px; font-size: 16px; }
+.card span { font-size: 12px; color: #9aa4c7; }
+
+footer {
+  margin-top: 60px;
+  text-align: center;
+  font-size: 13px;
+  color: #9aa4c7;
+}
+
+/* --- Fullscreen in-page game player --- */
+.topButtons{
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 50;
+  display:flex;
+  gap:10px;
+}
+.topBtn, .overlayBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:12px;
+  background: rgba(10, 15, 20, 0.55);
+  border: 1px solid rgba(255,255,255,0.14);
   color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-  box-shadow: 0 6px 18px rgba(0,0,0,.4);
+  text-decoration:none;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  user-select:none;
 }
-iframe {
-  width: 100vw;
-  height: calc(100vh - 72px);
-  border: none;
+.topBtn:hover, .overlayBtn:hover{ border-color: rgba(255,255,255,0.30); }
+
+.overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #05070b;
+  display:flex;
+  flex-direction:column;
 }
+.overlay.hidden{ display:none; }
+.overlayTop{
+  padding: 14px 18px;
+  display:flex;
+  justify-content:flex-end;
+}
+.overlayBtns{
+  display:flex;
+  gap:10px;
+}
+.overlayBtn.primary{
+  background: rgba(255,255,255,0.10);
+}
+#gameFrame{
+  flex:1;
+  width:100%;
+  border:0;
+  background:#000;
+}
+
+/* when player is open, keep the hub behind it but prevent scroll-jank */
+body.player-open{
+  overflow:hidden;
+}
+
 </style>
 </head>
+
 <body>
 
-<div class="topbar">
-  <a class="btn" href="index.html">↩ Site</a>
-  <a class="btn" href="games.html">← Games Hub</a>
+<div class="topButtons" id="topButtons">
+  <a class="topBtn" id="btnSite" href="index.html" aria-label="Back to main site">← Site</a>
 </div>
 
-<iframe src="Jacobs_Games_Hub_INDEX_LOCKED_CANONICAL_WITH_LIGHT_EMOJI_DEFINITION.html"></iframe>
+
+<header>
+  <img src="cat.webp" alt="Biblical Catective Cat">
+  <div>
+    <h1>Jacobs Games Hub</h1>
+    <p>Tap a card to play</p>
+  </div>
+</header>
+
+<main id="hubMain">
+<section class="grid">
+
+<a class="card" href="THE SCIENCE-THEOLOGY GAME.html">
+  <div class="badge">🧪⛪</div>
+  <h3>Science vs Theology</h3>
+</a>
+
+<a class="card" href="THE MODALITY GAME.html">
+  <div class="badge">🎯</div>
+  <h3>Modality Platformer</h3>
+</a>
+
+<a class="card" href="familytreegame11.html">
+  <div class="badge">🌳🐿️</div>
+  <h3>Roots of Reason</h3>
+</a>
+
+<a class="card" href="THE BIBLE ORDER GAME.html">
+  <div class="badge">📚</div>
+  <h3>Bible Books — Order Trainer</h3>
+</a>
+
+<a class="card" href="THE SALVATION HISTORY GAME.html">
+  <div class="badge">🕊️</div>
+  <h3>Salvation History Order Game</h3>
+</a>
+
+<a class="card" href="THE LITERARY TOOL GAME.html">
+  <div class="badge">🧰</div>
+  <h3>Match the Literary Tools</h3>
+</a>
+
+<a class="card" href="genesis1-pattern-game.html">
+  <div class="badge">🗓️</div>
+  <h3>Genesis 1 Sequence Game</h3>
+</a>
+
+<a class="card" href="creation-days-game.html">
+  <div class="badge">🌱</div>
+  <h3>Creation Days Matching Game</h3>
+</a>
+
+<a class="card" href="index%20(31).html">
+  <div class="badge">🐉⚔️</div>
+  <h3>Chaos vs Creation</h3>
+</a>
+
+<a class="card" href="the fall of the angels2.html">
+  <div class="badge">⚔️😇</div>
+  <h3>Fall of the Angels</h3>
+</a>
+
+<a class="card" href="whythetreegame1.html">
+  <div class="badge">⚖️</div>
+  <h3>The Definition</h3>
+</a>
+
+
+
+<a class="card" href="thelightgame3.html">
+  <div class="badge">👣💡</div>
+  <h3>Walking in the Light</h3>
+</a>
+
+<a class="card" href="icarus%20game6.html">
+  <div class="badge">⚠️🪽</div>
+  <h3>The Presumption</h3>
+</a>
+
+<a class="card" href="Hallmarks2.html">
+  <div class="badge">🗺️</div>
+  <h3>NDA Hallmarks Adventure Game</h3>
+</a>
+
+</section>
+</main>
+
+<footer>
+© 2025 Jacobs Games · Deployed via GitHub Pages
+</footer>
+
+
+<div id="playerOverlay" class="overlay hidden" aria-hidden="true">
+  <div class="overlayTop">
+    <div class="overlayBtns">
+      <a class="overlayBtn" id="overlaySite" href="index.html">← Site</a>
+      <button class="overlayBtn" id="overlayHub" type="button">↩ Games Hub</button>
+      <button class="overlayBtn primary" id="overlayFull" type="button" title="Full screen">⛶ Full Screen</button>
+    </div>
+  </div>
+  <iframe id="gameFrame" title="Game" allow="fullscreen" allowfullscreen></iframe>
+</div>
+
+
+<script>
+(function(){
+  const hubMain = document.getElementById('hubMain');
+  const overlay = document.getElementById('playerOverlay');
+  const frame = document.getElementById('gameFrame');
+  const btnHub = document.getElementById('overlayHub');
+  const btnFull = document.getElementById('overlayFull');
+
+  function openGame(url){
+    frame.src = url;
+    overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-hidden','false');
+    document.body.classList.add('player-open');
+
+    // Try to enter fullscreen immediately from the click gesture.
+    requestFullscreen();
+  }
+
+  function closeGame(){
+    frame.src = '';
+    overlay.classList.add('hidden');
+    overlay.setAttribute('aria-hidden','true');
+    document.body.classList.remove('player-open');
+    exitFullscreen();
+  }
+
+  function requestFullscreen(){
+    const el = overlay;
+    const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (rfs) {
+      try { rfs.call(el); } catch(e) {}
+    }
+  }
+
+  function exitFullscreen(){
+    const efs = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if (efs) {
+      try { efs.call(document); } catch(e) {}
+    }
+  }
+
+  // Intercept card clicks to play in the overlay
+  document.addEventListener('click', (ev)=>{
+    const a = ev.target.closest('a.card');
+    if(!a) return;
+
+    // Only intercept normal left-clicks / taps
+    if (ev.button && ev.button !== 0) return;
+    if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+
+    const href = a.getAttribute('href');
+    if(!href) return;
+
+    ev.preventDefault();
+    openGame(href);
+  });
+
+  btnHub.addEventListener('click', closeGame);
+  btnFull.addEventListener('click', requestFullscreen);
+
+  // ESC closes overlay (and exits fullscreen)
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && !overlay.classList.contains('hidden')){
+      // Let the browser handle exiting fullscreen first; then close overlay.
+      setTimeout(()=>{ 
+        if(!document.fullscreenElement && !document.webkitFullscreenElement){
+          closeGame();
+        }
+      }, 50);
+    }
+  });
+
+})();
+</script>
 
 </body>
 </html>
