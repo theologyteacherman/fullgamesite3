@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Salvation History: Level 1 - The Definition</title>
+    <title>Salvation History: The Full Journey</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@900&family=Orbitron:wght@500;900&family=VT323&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -44,13 +44,12 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             background: var(--glass); z-index: 60; 
-            transition: opacity 2s ease-in; /* Slower fade for dramatic effect */
+            transition: opacity 2s ease-in; 
             padding: 40px;
             box-sizing: border-box;
         }
         .hidden { opacity: 0; pointer-events: none; }
         
-        /* Animation Classes */
         .fade-hidden { opacity: 0; transition: opacity 1.5s ease-in; }
         .fade-visible { opacity: 1; pointer-events: auto; }
         
@@ -59,7 +58,6 @@
             text-shadow: 0 0 20px var(--gold); margin-bottom: 20px; text-align: center;
         }
         
-        /* Quote Box */
         .quote-container {
             border-left: 3px solid var(--neon-blue);
             padding-left: 20px;
@@ -88,7 +86,6 @@
         }
         .citation.show { opacity: 1; }
 
-        /* Mission Text */
         #mission-text { 
             color: #ccc; 
             font-size: 1.2em; 
@@ -120,62 +117,101 @@
 </head>
 <body>
 
+<audio id="bgMusic" loop>
+    <source src="CLASSICAL HAZE.MP3" type="audio/mpeg">
+</audio>
+
 <div id="cabinet">
     <canvas id="gameCanvas" width="1100" height="800"></canvas>
     
-    <div id="hud">ORDER RESTORED: <span id="score-display">0</span>/12</div>
+    <div id="hud">LEVEL <span id="level-display">1</span> - PROGRESS: <span id="score-display">0</span></div>
 
     <div id="screen-start" class="ui-layer">
-        <h1>THE DEFINITION</h1>
+        <h1 id="level-title">THE DEFINITION</h1>
         <div class="quote-container">
             <span id="quote-target" class="quote-text"></span>
-            <span id="citation-target" class="citation">- POPE JOHN PAUL II, VERITATIS SPLENDOR -</span>
+            <span id="citation-target" class="citation"></span>
         </div>
         <div id="mission-group" class="fade-hidden">
-            <div id="mission-text">
-                Adam and Eve did not just eat fruit. They tried to become their own <strong>God-Kings</strong>, defining Right and Wrong for themselves. This shattered the Moral Order.
-                <br><br>
-                <strong>MISSION:</strong> Collect the fragments of Truth and restore the Scales.
-                <br>
-                <strong>AVOID:</strong> The <span style="color:var(--danger)">Red Apples</span>. They are the temptation to "decide for yourself."
-            </div>
-            <button onclick="startGame()">RESTORE THE LAW</button>
+            <div id="mission-text"></div>
+            <button id="action-btn" onclick="startGame()">RESTORE THE LAW</button>
         </div>
     </div>
 
     <div id="screen-win" class="ui-layer hidden">
-        <h1 style="color: var(--gold); text-shadow: 0 0 50px white;">THY WILL BE DONE</h1>
-        <h2 style="color: var(--neon-blue); font-family: 'Orbitron'; letter-spacing: 5px;">DIVINE ORDER RESTORED</h2>
-        <p style="text-align: center; max-width: 700px; font-size: 1.4em; color: #ccc;">
-            The chaos of pride has been banished by the peace of God's Law.
+        <h1 style="color: var(--gold); text-shadow: 0 0 50px white;">COMPLETE</h1>
+        <h2 style="color: var(--neon-blue); font-family: 'Orbitron'; letter-spacing: 5px;" id="win-subtitle">DIVINE ORDER RESTORED</h2>
+        <p style="text-align: center; max-width: 700px; font-size: 1.4em; color: #ccc;" id="win-text">
+            The chaos of pride has been banished.
         </p>
-        <button onclick="location.reload()">PLAY AGAIN</button>
+        <button id="next-level-btn" onclick="nextLevel()">NEXT LEVEL</button>
     </div>
 </div>
 
 <script>
 /**
- * LEVEL 1: THE DEFINITION (Cinematic Ending)
+ * UNIFIED GAME ENGINE - 3 LEVELS
  */
 
+// --- LEVEL CONFIGURATION (UPDATED FILE NAMES) ---
+const LEVELS = [
+    {
+        id: 1,
+        title: "LEVEL 1: THE DEFINITION",
+        img: "level1.jpg", 
+        cols: 4,
+        rows: 3,
+        enemies: 6,
+        quote: '"Man cannot decide by himself what is good and what is evil... God the Creator is the one definitive source of the moral order."',
+        citation: "- POPE JOHN PAUL II, VERITATIS SPLENDOR -",
+        mission: "Adam and Eve tried to define Right and Wrong for themselves. This shattered the Moral Order.<br><br><strong>MISSION:</strong> Restore the Scales of Justice.",
+        btnText: "RESTORE THE LAW",
+        winSub: "DIVINE ORDER RESTORED",
+        winMsg: "The chaos of pride has been banished by the peace of God's Law."
+    },
+    {
+        id: 2,
+        title: "LEVEL 2: THE LAW OF LOVE",
+        // UPDATED: Now using .png
+        img: "helping cross street.png", 
+        cols: 5,
+        rows: 4,
+        enemies: 8,
+        quote: '"For the whole law is fulfilled in one word: ‘You shall love your neighbor as yourself.’"',
+        citation: "- ST. PAUL, GALATIANS 5:14 -",
+        mission: "The Law was given to guide us, but Law alone is not enough. Faith must work through Love.<br><br><strong>MISSION:</strong> Assemble the image of Charity.",
+        btnText: "WALK THE PATH",
+        winSub: "FAITH IN ACTION",
+        winMsg: "'Faith without works is dead.' You have restored the image of Love."
+    },
+    {
+        id: 3,
+        title: "LEVEL 3: THE NEW COMMANDMENT",
+        // UPDATED: Now using .png
+        img: "jesus.png", 
+        cols: 5,
+        rows: 4,
+        enemies: 6,
+        quote: '"As I have loved you, so you must love one another."',
+        citation: "- JESUS CHRIST, JOHN 13:34 -",
+        mission: "We cannot love on our own power. We need the Grace that comes from the Source itself.<br><br><strong>MISSION:</strong> Restore the image of the Divine Teacher.",
+        btnText: "FOLLOW ME",
+        winSub: "IT IS FINISHED",
+        winMsg: "You have completed the journey. Go forth and live the Gospel."
+    }
+];
+
+// --- ENGINE VARIABLES ---
+let currentLevelIdx = 0;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width;
 const H = canvas.height;
 
-// --- CONFIG ---
-const IMAGE_SRC = 'scales.jpg'; 
-const COLS = 4;
-const ROWS = 3;
-const PIECE_SIZE = 80; 
-const PUZZLE_W = COLS * PIECE_SIZE;
-const PUZZLE_H = ROWS * PIECE_SIZE;
-const QUOTE_TEXT = '"Man cannot decide by himself what is good and what is evil; cannot ‘know good and evil, like God’...For God the Creator is the one definitive source of the moral order in the world created by Him."';
-
-// --- STATE ---
 let running = false;
-let endingPhase = 0; // 0=Play, 1=WalkToCenter, 2=KneelAndGlow
+let endingPhase = 0; 
 let score = 0;
+let totalPieces = 0;
 let player = { x: 100, y: 300, w: 40, h: 40, speed: 400, carrying: null };
 let slots = [];
 let pieces = [];
@@ -184,10 +220,8 @@ let keys = {};
 let winTimer = 0;
 let flash = 0;
 let glowIntensity = 0;
-
-// Load Image
-const puzzleImg = new Image();
-puzzleImg.src = IMAGE_SRC;
+let puzzleImg = new Image();
+let twTimeout; 
 
 // --- AUDIO SYSTEM ---
 const AudioSys = {
@@ -205,39 +239,79 @@ const AudioSys = {
 };
 
 // --- INITIALIZATION ---
-function init() {
-    const startX = (W - PUZZLE_W) / 2;
-    const startY = (H - PUZZLE_H) / 2;
+function initLevel(levelIndex) {
+    if(levelIndex >= LEVELS.length) levelIndex = 0; 
+    const level = LEVELS[levelIndex];
+    currentLevelIdx = levelIndex; 
+    
+    if(twTimeout) clearTimeout(twTimeout);
 
-    for(let r=0; r<ROWS; r++) {
-        for(let c=0; c<COLS; c++) {
-            let id = r*COLS + c;
-            slots.push({x: startX + c*PIECE_SIZE, y: startY + r*PIECE_SIZE, w: PIECE_SIZE, h: PIECE_SIZE, id: id});
+    // Reset State
+    running = false;
+    endingPhase = 0;
+    score = 0;
+    winTimer = 0;
+    slots = [];
+    pieces = [];
+    apples = [];
+    player.carrying = null;
+    player.x = 100; player.y = 300;
+    glowIntensity = 0;
+    
+    // Update UI
+    document.getElementById('screen-win').classList.add('hidden');
+    document.getElementById('screen-start').classList.remove('hidden');
+    document.getElementById('mission-group').classList.remove('fade-visible');
+    document.getElementById('mission-group').classList.add('fade-hidden');
+    
+    document.getElementById('level-title').innerText = level.title;
+    document.getElementById('citation-target').innerText = level.citation;
+    document.getElementById('citation-target').classList.remove('show');
+    document.getElementById('mission-text').innerHTML = level.mission;
+    document.getElementById('action-btn').innerText = level.btnText;
+    document.getElementById('level-display').innerText = (levelIndex + 1);
+    
+    // Load Image
+    puzzleImg = new Image();
+    puzzleImg.src = level.img;
+
+    // Setup Grid
+    totalPieces = level.cols * level.rows;
+    document.getElementById('score-display').innerText = "0/" + totalPieces;
+    
+    const pieceW = 80;
+    const pieceH = 80;
+    const puzzleW = level.cols * pieceW;
+    const puzzleH = level.rows * pieceH;
+    const startX = (W - puzzleW) / 2;
+    const startY = (H - puzzleH) / 2;
+
+    for(let r=0; r<level.rows; r++) {
+        for(let c=0; c<level.cols; c++) {
+            let id = r*level.cols + c;
+            slots.push({x: startX + c*pieceW, y: startY + r*pieceH, w: pieceW, h: pieceH, id: id});
             let px, py;
             do {
-                px = Math.random() * (W - PIECE_SIZE);
-                py = Math.random() * (H - PIECE_SIZE);
-            } while (px > startX - 50 && px < startX + PUZZLE_W + 50 && py > startY - 50 && py < startY + PUZZLE_H + 50);
-            pieces.push({x: px, y: py, w: PIECE_SIZE, h: PIECE_SIZE, id: id, placed: false});
+                px = Math.random() * (W - pieceW);
+                py = Math.random() * (H - pieceH);
+            } while (px > startX - 50 && px < startX + puzzleW + 50 && py > startY - 50 && py < startY + puzzleH + 50);
+            pieces.push({x: px, y: py, w: pieceW, h: pieceH, id: id, placed: false});
         }
     }
 
-    for(let i=0; i<6; i++) {
-        apples.push({x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - 0.5) * 150, vy: (Math.random() - 0.5) * 150, r: 20});
+    // Setup Enemies
+    for(let i=0; i<level.enemies; i++) {
+        apples.push({
+            x: Math.random() * W, 
+            y: Math.random() * H, 
+            vx: (Math.random() - 0.5) * 180, 
+            vy: (Math.random() - 0.5) * 180, 
+            r: 20
+        });
     }
-
-    window.addEventListener('keydown', e => {
-        keys[e.code] = true;
-        if(e.code === 'Space') handleInteraction();
-        if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
-        
-        // CHEAT FOR TESTING: Shift+1
-        if(e.shiftKey && e.key === '1') score = 12;
-    });
-    window.addEventListener('keyup', e => keys[e.code] = false);
-
-    typeWriter(QUOTE_TEXT, 'quote-target', 40);
-    requestAnimationFrame(loop);
+    
+    // Typewriter Effect
+    typeWriter(level.quote, 'quote-target', 40);
 }
 
 function typeWriter(text, elementId, speed) {
@@ -249,7 +323,7 @@ function typeWriter(text, elementId, speed) {
             el.innerHTML += text.charAt(i);
             if(i % 3 === 0) AudioSys.playTone(800, 'sine', 0.05, 0.02);
             i++;
-            setTimeout(type, speed);
+            twTimeout = setTimeout(type, speed);
         } else {
             document.getElementById('citation-target').classList.add('show');
             setTimeout(() => { document.getElementById('mission-group').classList.add('fade-visible'); }, 1000);
@@ -262,12 +336,53 @@ function startGame() {
     document.getElementById('screen-start').classList.add('hidden');
     running = true;
     AudioSys.ctx.resume();
+    // Music
+    var music = document.getElementById('bgMusic');
+    music.volume = 0.5; 
+    music.play().catch(e => console.log(e));
+}
+
+function nextLevel() {
+    currentLevelIdx++;
+    if(currentLevelIdx < LEVELS.length) {
+        initLevel(currentLevelIdx);
+    } else {
+        currentLevelIdx = 0;
+        alert("GAME COMPLETE! Thank you for playing.");
+        initLevel(0);
+    }
 }
 
 // --- LOGIC ---
+window.addEventListener('keydown', e => {
+    keys[e.code] = true;
+    if(e.code === 'Space') handleInteraction();
+    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+    
+    // --- CHEAT CODES ---
+    
+    // Shift + 1: Go to Level 1
+    if(e.shiftKey && e.code === 'Digit1') {
+        initLevel(0);
+    }
+    // Shift + 2: Go to Level 2
+    if(e.shiftKey && e.code === 'Digit2') {
+        initLevel(1);
+    }
+    // Shift + 3: Go to Level 3
+    if(e.shiftKey && e.code === 'Digit3') {
+        initLevel(2);
+    }
+    // Shift + 0: INSTANT WIN
+    if(e.shiftKey && e.code === 'Digit0') {
+        score = totalPieces;
+    }
+});
+
+window.addEventListener('keyup', e => keys[e.code] = false);
 
 function handleInteraction() {
-    if(!running || endingPhase > 0) return; // No input during ending
+    if(!running || endingPhase > 0) return;
 
     if(player.carrying) {
         let p = player.carrying;
@@ -277,7 +392,7 @@ function handleInteraction() {
                 p.x = s.x; p.y = s.y; p.placed = true;
                 player.carrying = null; placed = true; score++;
                 AudioSys.playTone(880, 'square', 0.1); 
-                document.getElementById('score-display').innerText = score;
+                document.getElementById('score-display').innerText = score + "/" + totalPieces;
                 break;
             }
         }
@@ -294,39 +409,41 @@ function handleInteraction() {
 function update(dt) {
     if(!running) return;
 
-    // --- ENDING SEQUENCE LOGIC ---
-    if(score >= 12 && endingPhase === 0) {
-        // TRIGGER ENDING
+    if(score >= totalPieces && endingPhase === 0) {
         endingPhase = 1;
-        apples = []; // Banish the lies
+        apples = []; 
         player.carrying = null;
-        AudioSys.playTone(600, 'sine', 1.0); // Holy tone
+        AudioSys.playTone(600, 'sine', 1.0); 
     }
 
     if(endingPhase === 1) {
-        // WALK TO CENTER
         const targetX = W/2 - 20;
-        const targetY = H/2 + 200;
+        const targetY = H/2 + 250;
         const dx = targetX - player.x;
         const dy = targetY - player.y;
-        
         player.x += dx * 2 * dt;
         player.y += dy * 2 * dt;
-        
-        if(Math.abs(dx) < 2 && Math.abs(dy) < 2) {
-            endingPhase = 2; // Arrived
-        }
+        if(Math.abs(dx) < 2 && Math.abs(dy) < 2) endingPhase = 2;
     } 
     else if (endingPhase === 2) {
-        // KNEEL & GLOW
         glowIntensity += dt;
         winTimer += dt;
         if(winTimer > 4) {
+            const level = LEVELS[currentLevelIdx];
+            document.getElementById('win-subtitle').innerText = level.winSub;
+            document.getElementById('win-text').innerText = level.winMsg;
+            
+            const btn = document.getElementById('next-level-btn');
+            if(currentLevelIdx === LEVELS.length - 1) {
+                btn.innerText = "FINISH JOURNEY";
+            } else {
+                btn.innerText = "NEXT LEVEL";
+            }
+            
             document.getElementById('screen-win').classList.remove('hidden');
         }
     }
     else {
-        // NORMAL PLAY
         if(keys['ArrowUp']) player.y -= player.speed * dt;
         if(keys['ArrowDown']) player.y += player.speed * dt;
         if(keys['ArrowLeft']) player.x -= player.speed * dt;
@@ -356,45 +473,40 @@ function update(dt) {
 }
 
 // --- RENDERING ---
-
 function draw() {
-    // BG
     let g = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, 800);
     g.addColorStop(0, '#2c3e50');
     g.addColorStop(1, '#000');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // ENDING GLOW (Behind Puzzle)
     if(endingPhase === 2) {
         ctx.save();
         ctx.globalAlpha = Math.min(1, glowIntensity * 0.5);
         ctx.shadowBlur = 100;
         ctx.shadowColor = "gold";
         ctx.fillStyle = "rgba(255, 215, 0, 0.2)";
-        ctx.fillRect((W - PUZZLE_W)/2 - 50, (H - PUZZLE_H)/2 - 50, PUZZLE_W + 100, PUZZLE_H + 100);
+        const pW = LEVELS[currentLevelIdx].cols * 80;
+        const pH = LEVELS[currentLevelIdx].rows * 80;
+        ctx.fillRect((W - pW)/2 - 50, (H - pH)/2 - 50, pW + 100, pH + 100);
         ctx.restore();
     }
 
-    // Flash Red if hit
     if(flash > 0) {
         ctx.fillStyle = `rgba(255, 0, 0, ${flash/20})`;
         ctx.fillRect(0,0,W,H);
     }
 
     // Ghost Image
-    if(puzzleImg.complete && endingPhase === 0) {
-        ctx.globalAlpha = 0.2;
-        ctx.drawImage(puzzleImg, 850, 300, 200, 150); 
+    if(puzzleImg.complete && puzzleImg.naturalWidth > 0 && endingPhase === 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        ctx.drawImage(puzzleImg, W-180, 50, 160, 120); 
         ctx.strokeStyle = "#444";
-        ctx.strokeRect(850, 300, 200, 150);
-        ctx.globalAlpha = 1.0;
-        ctx.fillStyle = "#666";
-        ctx.font = "16px monospace";
-        ctx.fillText("GOD'S DEFINITION", 850, 290);
+        ctx.strokeRect(W-180, 50, 160, 120);
+        ctx.restore();
     }
 
-    // Slots & Pieces
     ctx.strokeStyle = endingPhase > 0 ? "rgba(255, 215, 0, 1)" : "rgba(255, 215, 0, 0.3)";
     ctx.lineWidth = 2;
     for(let s of slots) ctx.strokeRect(s.x, s.y, s.w, s.h);
@@ -403,7 +515,6 @@ function draw() {
 
     drawPlayer();
     
-    // Kneeling text
     if(endingPhase === 2 && winTimer > 1.5) {
         ctx.fillStyle = "white";
         ctx.font = "20px 'Cinzel'";
@@ -421,20 +532,20 @@ function drawApple(a) {
 function drawPiece(p) {
     ctx.save();
     ctx.translate(p.x, p.y);
-    // If ending, make pieces glow
-    if(endingPhase > 0) {
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = "gold";
-    }
     ctx.fillStyle = '#222'; ctx.fillRect(0,0, p.w, p.h);
+    
+    const level = LEVELS[currentLevelIdx];
     if(puzzleImg.complete && puzzleImg.naturalWidth > 0) {
-        let col = p.id % COLS; let row = Math.floor(p.id / COLS);
-        let sw = puzzleImg.naturalWidth / COLS; let sh = puzzleImg.naturalHeight / ROWS;
+        let col = p.id % level.cols; 
+        let row = Math.floor(p.id / level.cols);
+        let sw = puzzleImg.naturalWidth / level.cols; 
+        let sh = puzzleImg.naturalHeight / level.rows;
         ctx.drawImage(puzzleImg, col * sw, row * sh, sw, sh, 0, 0, p.w, p.h);
     } else {
-        ctx.fillStyle = '#444'; ctx.fillText(p.id, 30, 45);
+        ctx.fillStyle = '#555'; ctx.fillText("?", p.w/2 - 5, p.h/2 + 5);
     }
-    ctx.strokeStyle = p.placed ? '#39FF14' : '#FFD700'; ctx.strokeRect(0,0, p.w, p.h);
+    ctx.strokeStyle = p.placed ? '#39FF14' : '#FFD700'; 
+    ctx.strokeRect(0,0, p.w, p.h);
     ctx.restore();
 }
 
@@ -445,10 +556,8 @@ function drawPlayer() {
     ctx.translate(player.x, player.y);
     const p = size / 10; 
 
-    // Visual change for Kneeling (Ending Phase 2)
     if(endingPhase === 2) {
-        ctx.translate(0, 15); // Move down
-        ctx.scale(1, 0.7); // Squish height
+        ctx.translate(0, 15); ctx.scale(1, 0.7); 
     }
 
     ctx.fillStyle = '#b0bec5'; ctx.fillRect(2*p, 2*p, 6*p, 8*p); 
@@ -458,13 +567,14 @@ function drawPlayer() {
     if(holding) { 
         ctx.fillStyle = '#b0bec5'; ctx.fillRect(0*p, 1*p, 2*p, 4*p); ctx.fillRect(8*p, 1*p, 2*p, 4*p); 
     } else if (endingPhase === 2) {
-        // Prayer hands?
         ctx.fillStyle = '#b0bec5'; ctx.fillRect(3*p, 5*p, 4*p, 4*p); 
     } else { 
         ctx.fillStyle = '#b0bec5'; ctx.fillRect(0, 3*p, 2*p, 5*p); ctx.fillRect(8*p, 3*p, 2*p, 5*p); 
     }
     ctx.restore();
 }
+
+function dist(x1, y1, x2, y2) { return Math.sqrt( (x1-x2)**2 + (y1-y2)**2 ); }
 
 function loop(time) {
     let dt = (time - lastTime) / 1000;
@@ -475,10 +585,10 @@ function loop(time) {
     requestAnimationFrame(loop);
 }
 
-function dist(x1, y1, x2, y2) { return Math.sqrt( (x1-x2)**2 + (y1-y2)**2 ); }
-
 let lastTime = 0;
-init();
+// START ENGINE
+initLevel(0);
+requestAnimationFrame(loop);
 
 </script>
 </body>
