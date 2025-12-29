@@ -513,23 +513,91 @@ bgMusic.onerror = () => console.log("HallwayDaydreams.mp3 missing");
 let musicStarted = false;
 
 // --- Images ---
+// ===============================
+// CASE-ROBUST IMAGE LOADER (Option B)
+// Tries multiple filename variants so the game works on case-sensitive hosts.
+// ===============================
 const images = {};
+const _imgTried = {}; // key -> tried list (for debugging)
+
+function _unique(arr){
+  const seen = new Set();
+  const out = [];
+  for (const x of arr){
+    if (!x) continue;
+    const k = String(x);
+    if (!seen.has(k)){ seen.add(k); out.push(k); }
+  }
+  return out;
+}
+
+function _variantsForFilename(filename){
+  if (!filename) return [];
+  const f = String(filename);
+
+  const m = f.match(/^(.*?)(\.[^.]*)$/);
+  const base = m ? m[1] : f;
+  const ext  = m ? m[2] : "";
+
+  const lowerAll = (base + ext).toLowerCase();
+  const lowerExt = base + ext.toLowerCase();
+  const upperExt = base + ext.toUpperCase();
+
+  const compactBase = base.replace(/[.\s_-]+/g, "");
+  const compactLower = (compactBase + ext).toLowerCase();
+
+  return _unique([f, lowerExt, upperExt, lowerAll, compactLower]);
+}
+
+function loadImgVariants(key, filenames){
+  if (!key || !filenames || !filenames.length) return;
+  const list = _unique(filenames.flatMap(_variantsForFilename));
+  _imgTried[key] = list.slice();
+
+  const img = new Image();
+  images[key] = img;
+
+  let idx = 0;
+  const tryNext = () => {
+    if (idx >= list.length){
+      console.warn(`[NDA Hallmarks] Image missing for key "${key}". Tried:`, list);
+      return;
+    }
+    const src = list[idx++];
+    img.onerror = () => tryNext();
+    img.src = src;
+  };
+  tryNext();
+}
+
+// Backward-compatible wrapper
 function loadImg(key, src){
   if(!src) return;
-  const img = new Image();
-  img.src = src;
-  images[key] = img;
+  loadImgVariants(key, [src]);
 }
-loadImg("jacobs", "jacobs.png");
-loadImg("jacobs2", "jacobs2.png");
-loadImg("chapel_teacher","theteacher.png");
-loadImg("teacher","Mrs.teacher.png");
-loadImg("coach","Mr.Coach.png");
-loadImg("coordinator","Campusminister.png");
-loadImg("librarian","Librarian.png");
-loadImg("student","SeniorStudent.png");
-loadImg("scientist","Labdirector.png");
-loadImg("saint","saintjulie2.png");
+// Load all requested images (case-robust)
+// --- Explicit per-NPC filename variants (covers common real-world filenames) ---
+loadImgVariants("jacobs", ["jacobs.png","Jacobs.png","JACOBS.png"]);
+loadImgVariants("jacobs2", ["jacobs2.png","Jacobs2.png","JACOBS2.png"]);
+
+loadImgVariants("chapel_teacher", ["theteacher.png","TheTeacher.png","theTeacher.png"]);
+loadImgVariants("teacher", ["Mrs.teacher.png","mrs.teacher.png","Mrs.Teacher.png","mrsteacher.png","teacher.png"]);
+loadImgVariants("coach", ["Mr.Coach.png","mr.coach.png","mrcoach.png","coach.png"]);
+loadImgVariants("coordinator", ["Campusminister.png","campusminister.png","CampusMinister.png"]);
+loadImgVariants("librarian", ["Librarian.png","librarian.png"]);
+loadImgVariants("student", ["SeniorStudent.png","seniorstudent.png","student.png"]);
+loadImgVariants("scientist", ["Labdirector.png","labdirector.png","LabDirector.png"]);
+loadImgVariants("saint", ["saintjulie2.png","SaintJulie2.png","saintjulie.png","SaintJulie.png"]);
+
+// Round 2 extras
+loadImgVariants("artteacher", ["ArtTeacher.png","artteacher.png"]);
+loadImgVariants("musicdirector", ["MusicDirector.png","musicdirector.png","musicteacher.png","MusicTeacher.png"]);
+loadImgVariants("cafeteria", ["Cafeteria.png","cafeteria.png","CafeteriaStaff.png","cafeteriastaff.png"]);
+loadImgVariants("coach2", ["Coach2.png","coach2.png"]);
+loadImgVariants("dramateacher", ["DramaTeacher.png","dramateacher.png"]);
+loadImgVariants("stemmentor", ["STEMMentor.png","stemmentor.png"]);
+loadImgVariants("office", ["Office.png","office.png","frontoffice.png","FrontOffice.png"]);
+
 // Round 2 optional sprites (safe even if missing)
 loadImg("art","ArtTeacher.png");
 loadImg("music","MusicDirector.png");
