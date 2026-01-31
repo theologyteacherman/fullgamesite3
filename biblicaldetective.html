@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblical Detective - Documentary Hypothesis</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        canvas { border: 2px solid #444; image-rendering: pixelated; }
+    </style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<video id="jedpVideo" src="JEDP.mp4" preload="auto" muted playsinline style="display:none;"></video>
+<audio id="bgMusic" src="Pixel_Sunset_2026-01-28T110627.mp3" preload="auto" loop></audio>
+<script>
+// ============================================================
+// BIBLICAL DETECTIVE - A Donkey Kong-Style Platformer
+// Collect J, E, D, P Sources to reconstruct the Torah!
+// ============================================================
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+canvas.width = 900;
+canvas.height = 800;
+
+// --- JEDP VIDEO ---
+const jedpVideo = document.getElementById('jedpVideo');
+let videoEnded = false;
+jedpVideo.addEventListener('ended', () => { videoEnded = true; });
+
+// --- BACKGROUND MUSIC ---
+const bgMusic = document.getElementById('bgMusic');
+bgMusic.volume = 0.4;
+
+// --- SPRITES (actual user-provided orange cat detective) ---
+const SPRITES = {
+    east: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAC/UlEQVR4nO2ZX0hTURzHvzeysSF4b4LsH/NBk2RELMcMHxTpISgE66EIokdBCXwQIoPIYNhTPdRbj1EkGrUXfdCHIMpwbUHCEMIJSpt3A3c3iK214PZg53Y3SUh/v4vCPk9n515+5/e95/c753fOgDp16hxqJE7jXcFBXbTjsQjLWORG29tChtNNirvqGYeII5TG2ttCeqmooVTUEJ3ogKshX/XcPCNUkAoQvBo/D9hkPBvxcpiv4iiHUbmyBpSPAzYZamrJ6Lc7FPK8IIvJruCgrqYSALYdFdTmgZkDI6A2tgtaGtGJDgBAaOIrSkXNeGZ3KFhNRsk+HHkIFbQ0og9CQDkPAIYQm6sV5c11ZLI5dI7RjUeSxAUtDQB4fu3ntsN/nDfTezsBm6uVYrgqSASsJqNSPBaR1K38P99ZGG1EeXMdL3IBeFwnyJZTllXIzPe+R1W/h/qAqakFMvuk+0D/5KL0ZWVt13emI7OkSUy+tX98fFP/trIMADjX40Mmm4PWHcZycg0ueyMCZ8/A52s5uALM8X0jJBv9w09mSR0XsOWA3aFgPuVGPBaRFt9/1qcjsyzjkBdzot2kuKGmEugKDupenxcXKzPY2Mge/GLO7lDg9PgBAE6PH2oqgbv37kPrDiM+MEA9HE81asbp8ePDu0/w+ngqU3YBgpGrV1jssgsoaOldK9L9wr4TCzYrMsINMrldy0II+Fv0UcIiQBxsgO3lVDjOEUqWzgAHlgl48/opi11LBDQpbly6PMSSA2yr0MJoo9HOZHO4/vLY4cwBm6sVvtMBNvukAlaTUelkiwN2h4JTt5aQyeYAAOVcAQUtzXK1SG5wZrhXH5//AQDGdYoo7jgE7CkH3t7p0Z3NMjrH5qTafuAXSkUNTo+ftYQQ7CmEnM0yAOEwdrStZM9TuvLwguGw+Tqlf3JRam8L6VZcrQP7SOLOsTlJ3crvcJ7Cqf+B5Q8Oq74+YNF5gBO2nVhNJYxrdnHYp7zQErDNQO0yasWSWqdOnUPIb7U0AItwHVPnAAAAAElFTkSuQmCC',
+    west: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAC6UlEQVR4nO2Z30tTcRTAP+sH4VjNK+aPrTdNAwljk2uIBEIY9CSU9RL1HsiiNyNk+KARFUX+Bz7VS770UD5EEVJDAysRnRmIm0tod4s1k6Lbg9zr5jYpPd9htc/TtnM5Pzjfc77n3EGJEv83DlWK6+t0E2AlbRBZCiuzo0Sxv6XLzPyeNKLMfQgpsbVLWuFG5wGGAzr+li7Tyook4gFsZDTgolFLMHTxELB+tKTYI6XIcixpRFlJGxmSVgAatYSUqSxEzmW+Y5OPWGSKMqcmWg9iivwtXWYsMgVAmVMDIDSoo/eGcGuerGcli1q0M0zfPm0CVFdV5Mj04KwdSNKI4tY8TIyPbNu+aBFXV1Vw8lY4rywUbGA04KJ2byInI9tBLAPe2sPmu3unmIltXrCT0/N0DIyJ2RXrQgCp4314gVTGb67nVyVN5CB2hCJLYcfDkcebPjM5PS9lzkY0A22+5qzvrlf9AHxajhP7nAAQPT4gHUC7zzH28o155OMdZoxyAMq/x3k/l6JSk7S0jpIBa2Fh2QRYXFiku/t8lkx6MlUyC70ePIvbfYCeK/2UOTVqvE22bMfOQpl43u7G7zsBYPd863aWRkkGllNpgKwLy/qcPehtH/EAHjW3mg9+fsGteUgaUWn1OYgHUOVyMp7eL622IOIBXIp9tY+L5MxTCPEAMp22xmuVKF8pVaM0gMzWqaqglQRw/26fvbRYSLdPC/FRotB+bO3DgOhOXPQa2PEXmcVowMWLG010eiNKLzQlAVgOr8aTXO/pJBRsANZarPRMpGSctibO0KAOqwku35zgTPtBKrUf4guNkgxY3edo4Al6cJbwvkZb9uxaW94ijw9f2NKYrawG3JqHGm+THUzv02+2bGMQhYL6HZS9ty/0ir2Qs83HfFScG/pjf4reRvPVQMfAmGMrzoPCDMDayy5rnbQ6k/QfHUXLgKrRumjDnCqUBWAVcdKI/n03cX2dbhZjHy5RosQ/wC9c9veQ5EhqwgAAAABJRU5ErkJggg==',
+    south: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADg0lEQVR4nO2YX0iUWRTAfxMulQzoTGXjTAalRjGYpDJSQaG7FCwb1ELSg8YW1FNiVPTQQ4kPClGxy0bty9JDPuzOiwkVLW1KQbIM/UFMWlaFRdB0ivnmI5lpKLg92B3mj07pdz4qmB8MfN+997vnnHvOvfecgTx58nzVOOyauLZurwIwjUmKXF4eP7phi6wlUhNFrjcr/ayVByhyedPazMFe9fzi9yprgkUiZsB0OEIkeExVlAfmVe5A1SZV8DIkJRIQNACARJRQ+4Z5u8/9tI5ExBQVWSA10bPRGVaXraeq7S+WF7rmHLPnCoS61kuJBIQ2cUV5QOlYXwgSG9vyBFp505gEIB4zAOb1QiajYyFLOoh5IB4zGDpfD0Cg/T/6+m/ivH8CgJmdl9j341HutjmZDkf47sIIywtdlpUHoU08OhZy/H2qcvZlaXHOsatL3AydrxdRHgQvssj1ZsXSYv71HmbN2jUANDb8AEBf/83kOOc/HZCI4m7pFpEtdgpptPIAF7s6WOUtyRozHY6IyRMzwN3S7dC3cfDGrbS+gSeDAGyrqWZjIsqmk7dtS2Es0xu8o8bHw8o032T9eoN3xFIIjfhK+Eorlcfn50hrMwAz5msAfvvlKmD92LSVivKA8pVWql27m5RpvlE91fXq4fYGNT4eVrt2NylfaWXOXGkxiK1Gbd1eNTUxjMfnB2Bf9Ur8j4YocRbSv7GcnsFXgHx6LZrMeXx+piaGAWi9dDnZfvBcJ0CyTxLxY9Tj8yfTCoDwTIwyZldee0cSEQ/oYiV1hWtrdiSft9ZvTz7rMalFjxVk64EPzJWZLiZb/RTEQ0hT5PLy+zdRXrwtxuMrtUuMdQ/kOhaf/j+R81uJMLIlhDSfWhNYwVYDAH79+ayt89tuQOvxjrR3aa9Y3sShrgAkogBUnc7u77v3B43fHkhru9vmTD67W6zJF/1fKPOiiseMLOWlsWyAu+myA2ZLxblShdRbGWaN0gWNRFW26AkiwWNKh45WJPVIjccMug+tAuDIn+/SvpVMqUUvsnjMyAojz4pi4rGRZHumR6xiaSX6z2xLu4iar71MU1SvtC5yMtslsLQHGjoHPnt1ZXkTN3QOOF4ZBSzz1ODfvOWj46WTOpE9sP/qAwc8EEuRF4LtNzHYmxOJGmAakznLxqmJ4S/rFEolM3wyi/aP9efJkyfP18l7KJ5QdoGbW9IAAAAASUVORK5CYII='
+};
+
+// --- AUDIO ENGINE ---
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+function playSound(type) {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    const t = audioCtx.currentTime;
+    switch(type) {
+        case 'jump':
+            o.type = 'square'; o.frequency.setValueAtTime(200, t);
+            o.frequency.linearRampToValueAtTime(600, t+0.15);
+            g.gain.setValueAtTime(0.15, t); g.gain.linearRampToValueAtTime(0, t+0.2);
+            o.start(t); o.stop(t+0.2); break;
+        case 'land':
+            o.type = 'triangle'; o.frequency.setValueAtTime(120, t);
+            g.gain.setValueAtTime(0.1, t); g.gain.linearRampToValueAtTime(0, t+0.1);
+            o.start(t); o.stop(t+0.1); break;
+        case 'collect':
+            o.type = 'sine'; o.frequency.setValueAtTime(523, t);
+            o.frequency.setValueAtTime(659, t+0.1); o.frequency.setValueAtTime(784, t+0.2);
+            g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t+0.35);
+            o.start(t); o.stop(t+0.35); break;
+        case 'hurt':
+            o.type = 'sawtooth'; o.frequency.setValueAtTime(300, t);
+            o.frequency.linearRampToValueAtTime(100, t+0.3);
+            g.gain.setValueAtTime(0.15, t); g.gain.linearRampToValueAtTime(0, t+0.4);
+            o.start(t); o.stop(t+0.4); break;
+        case 'win':
+            o.type = 'sine';
+            [523,587,659,784,1047].forEach((f,i) => {
+                o.frequency.setValueAtTime(f, t+i*0.12);
+            });
+            g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t+0.7);
+            o.start(t); o.stop(t+0.7); break;
+        case 'die':
+            o.type = 'square'; o.frequency.setValueAtTime(400, t);
+            o.frequency.linearRampToValueAtTime(80, t+0.6);
+            g.gain.setValueAtTime(0.15, t); g.gain.linearRampToValueAtTime(0, t+0.7);
+            o.start(t); o.stop(t+0.7); break;
+        case 'levelComplete':
+            o.type = 'sine';
+            [523,659,784,1047,784,1047].forEach((f,i) => {
+                o.frequency.setValueAtTime(f, t+i*0.15);
+            });
+            g.gain.setValueAtTime(0.25, t); g.gain.linearRampToValueAtTime(0, t+1.0);
+            o.start(t); o.stop(t+1.0); break;
+    }
+}
+
+// --- DEATH SOUND CLIPS ---
+const deathClips = ['hey!.mp3', 'notnice!.mp3', 'ow!.mp3', 'yougotme.mp3'].map(src => {
+    const a = new Audio(src);
+    a.preload = 'auto';
+    return a;
+});
+function playDeathClip() {
+    const clip = deathClips[Math.floor(Math.random() * deathClips.length)];
+    clip.currentTime = 0;
+    clip.play().catch(() => {});
+}
+
+// --- LOAD IMAGES ---
+const spriteImages = {};
+let spritesLoaded = 0;
+const totalSprites = Object.keys(SPRITES).length;
+
+Object.entries(SPRITES).forEach(([key, src]) => {
+    const img = new Image();
+    img.onload = () => { spritesLoaded++; };
+    img.src = src;
+    spriteImages[key] = img;
+});
+
+// --- INPUT ---
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.code] = true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+// --- GAME CONSTANTS ---
+const GRAVITY = 0.65;
+const JUMP_FORCE = -11;
+const MOVE_SPEED = 4.0;
+const CLIMB_SPEED = 2.5;
+const PLAYER_W = 36;
+const PLAYER_H = 42;
+
+// --- SOURCE INFO ---
+const SOURCES = [
+    { key: 'J', name: 'Jahwist Source', color: '#FFD700', desc: 'Uses YHWH, anthropomorphic God, Judah focus' },
+    { key: 'E', name: 'Elohist Source', color: '#87CEEB', desc: 'Uses Elohim, dreams & angels, Northern focus' },
+    { key: 'D', name: 'Deuteronomist Source', color: '#90EE90', desc: 'Law code, covenant theology, one sanctuary' },
+    { key: 'P', name: 'Priestly Source', color: '#DDA0DD', desc: 'Genealogies, rituals, transcendent God' }
+];
+
+// --- LEVEL DEFINITIONS ---
+// Canvas is 900x800. Floors spaced ~130px apart for generous jump room.
+function buildLevel(levelIdx) {
+    const platforms = [];
+    const ladders = [];
+    const enemies = [];
+    const scrollPos = { x: 0, y: 0 };
+    const playerStart = { x: 60, y: 710 };
+
+    // Ground
+    platforms.push({ x: 0, y: 760, w: 900, h: 40 });
+
+    if (levelIdx === 0) {
+        // J Source - Classic DK alternating layout
+        platforms.push({ x: 0, y: 630, w: 800, h: 16 });
+        platforms.push({ x: 100, y: 500, w: 800, h: 16 });
+        platforms.push({ x: 0, y: 370, w: 800, h: 16 });
+        platforms.push({ x: 100, y: 240, w: 800, h: 16 });
+        platforms.push({ x: 280, y: 120, w: 340, h: 16 });
+
+        ladders.push({ x: 760, y: 630, h: 130 });
+        ladders.push({ x: 140, y: 500, h: 130 });
+        ladders.push({ x: 760, y: 370, h: 130 });
+        ladders.push({ x: 140, y: 240, h: 130 });
+        ladders.push({ x: 430, y: 120, h: 120 });
+
+        enemies.push({ x: 200, y: 614, w: 30, h: 16, speed: 0.8, minX: 0, maxX: 770, type: 'patrol' });
+        enemies.push({ x: 500, y: 484, w: 30, h: 16, speed: -0.9, minX: 100, maxX: 870, type: 'patrol' });
+        enemies.push({ x: 300, y: 354, w: 30, h: 16, speed: 0.8, minX: 0, maxX: 770, type: 'patrol' });
+        enemies.push({ x: 600, y: 224, w: 30, h: 16, speed: -1.0, minX: 100, maxX: 870, type: 'patrol' });
+
+        scrollPos.x = 420; scrollPos.y = 65;
+        playerStart.x = 60; playerStart.y = 710;
+    }
+    else if (levelIdx === 1) {
+        // E Source - Tower with split/center alternating floors
+        // Split floors have a gap; center floors bridge across.
+        // Path: Ground → F1 LEFT → F2 CENTER → F3 LEFT or RIGHT → F4 CENTER → Top
+        platforms.push({ x: 0, y: 630, w: 400, h: 16 });       // Floor 1 LEFT
+        platforms.push({ x: 500, y: 630, w: 400, h: 16 });      // Floor 1 RIGHT
+        platforms.push({ x: 100, y: 500, w: 700, h: 16 });      // Floor 2 CENTER (wide bridge)
+        platforms.push({ x: 0, y: 370, w: 400, h: 16 });        // Floor 3 LEFT
+        platforms.push({ x: 500, y: 370, w: 400, h: 16 });      // Floor 3 RIGHT
+        platforms.push({ x: 100, y: 240, w: 700, h: 16 });      // Floor 4 CENTER (wide bridge)
+        platforms.push({ x: 300, y: 120, w: 300, h: 16 });      // Top
+
+        // Every ladder sits on a platform at BOTH its top and bottom
+        ladders.push({ x: 350, y: 630, h: 130 });   // Ground→F1L (F1L: 0-400 ✓)
+        ladders.push({ x: 200, y: 500, h: 130 });    // F1L→F2 (F1L: 0-400 ✓, F2: 100-800 ✓)
+        ladders.push({ x: 750, y: 500, h: 130 });    // F1R→F2 (F1R: 500-900 ✓, F2: 100-800 ✓)
+        ladders.push({ x: 350, y: 370, h: 130 });    // F2→F3L (F2: 100-800 ✓, F3L: 0-400 ✓)
+        ladders.push({ x: 650, y: 370, h: 130 });    // F2→F3R (F2: 100-800 ✓, F3R: 500-900 ✓)
+        ladders.push({ x: 200, y: 240, h: 130 });    // F3L→F4 (F3L: 0-400 ✓, F4: 100-800 ✓)
+        ladders.push({ x: 750, y: 240, h: 130 });    // F3R→F4 (F3R: 500-900 ✓, F4: 100-800 ✓)
+        ladders.push({ x: 430, y: 120, h: 120 });    // F4→Top (F4: 100-800 ✓, Top: 300-600 ✓)
+
+        enemies.push({ x: 150, y: 614, w: 30, h: 16, speed: 0.7, minX: 0, maxX: 370, type: 'patrol' });
+        enemies.push({ x: 650, y: 614, w: 30, h: 16, speed: -0.7, minX: 500, maxX: 870, type: 'patrol' });
+        enemies.push({ x: 400, y: 484, w: 30, h: 16, speed: 0.9, minX: 100, maxX: 770, type: 'patrol' });
+        enemies.push({ x: 150, y: 354, w: 30, h: 16, speed: 0.8, minX: 0, maxX: 370, type: 'patrol' });
+        enemies.push({ x: 650, y: 354, w: 30, h: 16, speed: -0.8, minX: 500, maxX: 870, type: 'patrol' });
+        enemies.push({ x: 400, y: 224, w: 30, h: 16, speed: 1.0, minX: 100, maxX: 770, type: 'patrol' });
+
+        scrollPos.x = 420; scrollPos.y = 65;
+        playerStart.x = 60; playerStart.y = 710;
+    }
+    else if (levelIdx === 2) {
+        // D Source - Zigzag traversal with jumpable gaps
+        // Each floor has two segments with a ~100px gap to jump across.
+        // Ladders alternate left/right sides, forcing a zigzag path.
+        platforms.push({ x: 0, y: 630, w: 380, h: 16 });       // Floor 1 LEFT
+        platforms.push({ x: 480, y: 630, w: 420, h: 16 });      // Floor 1 RIGHT
+        platforms.push({ x: 0, y: 500, w: 420, h: 16 });        // Floor 2 LEFT
+        platforms.push({ x: 520, y: 500, w: 380, h: 16 });      // Floor 2 RIGHT
+        platforms.push({ x: 0, y: 370, w: 380, h: 16 });        // Floor 3 LEFT
+        platforms.push({ x: 480, y: 370, w: 420, h: 16 });      // Floor 3 RIGHT
+        platforms.push({ x: 100, y: 240, w: 700, h: 16 });      // Floor 4 (wide, reward)
+        platforms.push({ x: 300, y: 120, w: 300, h: 16 });      // Top
+
+        // Zigzag: climb left → run right, jump gap → climb right → run left, jump gap → etc.
+        ladders.push({ x: 140, y: 630, h: 130 });    // Ground→F1L (F1L: 0-380 ✓)
+        ladders.push({ x: 830, y: 500, h: 130 });    // F1R→F2R (F1R: 480-900 ✓, F2R: 520-900 ✓)
+        ladders.push({ x: 140, y: 370, h: 130 });    // F2L→F3L (F2L: 0-420 ✓, F3L: 0-380 ✓)
+        ladders.push({ x: 760, y: 240, h: 130 });    // F3R→F4 (F3R: 480-900 ✓, F4: 100-800 ✓)
+        ladders.push({ x: 430, y: 120, h: 120 });    // F4→Top (F4: 100-800 ✓, Top: 300-600 ✓)
+
+        enemies.push({ x: 200, y: 614, w: 30, h: 16, speed: 0.8, minX: 0, maxX: 350, type: 'patrol' });
+        enemies.push({ x: 600, y: 614, w: 30, h: 16, speed: -0.9, minX: 480, maxX: 870, type: 'patrol' });
+        enemies.push({ x: 200, y: 484, w: 30, h: 16, speed: -0.8, minX: 0, maxX: 390, type: 'patrol' });
+        enemies.push({ x: 650, y: 484, w: 30, h: 16, speed: 0.9, minX: 520, maxX: 870, type: 'patrol' });
+        enemies.push({ x: 200, y: 354, w: 30, h: 16, speed: 0.8, minX: 0, maxX: 350, type: 'patrol' });
+        enemies.push({ x: 600, y: 354, w: 30, h: 16, speed: -0.9, minX: 480, maxX: 870, type: 'patrol' });
+        enemies.push({ x: 400, y: 224, w: 30, h: 16, speed: 1.0, minX: 100, maxX: 770, type: 'patrol' });
+
+        scrollPos.x = 420; scrollPos.y = 65;
+        playerStart.x = 60; playerStart.y = 710;
+    }
+    else if (levelIdx === 3) {
+        // P Source - Many small platforms
+        platforms.push({ x: 0, y: 660, w: 250, h: 16 });
+        platforms.push({ x: 330, y: 660, w: 250, h: 16 });
+        platforms.push({ x: 650, y: 660, w: 250, h: 16 });
+        platforms.push({ x: 100, y: 530, w: 300, h: 16 });
+        platforms.push({ x: 500, y: 530, w: 300, h: 16 });
+        platforms.push({ x: 0, y: 400, w: 250, h: 16 });
+        platforms.push({ x: 330, y: 400, w: 250, h: 16 });
+        platforms.push({ x: 650, y: 400, w: 250, h: 16 });
+        platforms.push({ x: 150, y: 270, w: 250, h: 16 });
+        platforms.push({ x: 500, y: 270, w: 250, h: 16 });
+        platforms.push({ x: 250, y: 140, w: 400, h: 16 });
+
+        ladders.push({ x: 220, y: 660, h: 100 });
+        ladders.push({ x: 550, y: 660, h: 100 });
+        ladders.push({ x: 370, y: 530, h: 130 });
+        ladders.push({ x: 770, y: 530, h: 130 });
+        ladders.push({ x: 220, y: 400, h: 130 });
+        ladders.push({ x: 550, y: 400, h: 130 });
+        ladders.push({ x: 370, y: 270, h: 130 });
+        ladders.push({ x: 720, y: 270, h: 130 });
+        ladders.push({ x: 430, y: 140, h: 130 });
+
+        enemies.push({ x: 50, y: 644, w: 30, h: 16, speed: 0.7, minX: 0, maxX: 220, type: 'patrol' });
+        enemies.push({ x: 400, y: 644, w: 30, h: 16, speed: -0.7, minX: 330, maxX: 550, type: 'patrol' });
+        enemies.push({ x: 750, y: 644, w: 30, h: 16, speed: 0.9, minX: 650, maxX: 870, type: 'patrol' });
+        enemies.push({ x: 200, y: 514, w: 30, h: 16, speed: 0.9, minX: 100, maxX: 370, type: 'patrol' });
+        enemies.push({ x: 600, y: 514, w: 30, h: 16, speed: -0.9, minX: 500, maxX: 770, type: 'patrol' });
+        enemies.push({ x: 80, y: 384, w: 30, h: 16, speed: 0.8, minX: 0, maxX: 220, type: 'patrol' });
+        enemies.push({ x: 430, y: 384, w: 30, h: 16, speed: -0.8, minX: 330, maxX: 550, type: 'patrol' });
+        enemies.push({ x: 750, y: 384, w: 30, h: 16, speed: 0.9, minX: 650, maxX: 870, type: 'patrol' });
+        enemies.push({ x: 250, y: 254, w: 30, h: 16, speed: 1.0, minX: 150, maxX: 370, type: 'patrol' });
+        enemies.push({ x: 600, y: 254, w: 30, h: 16, speed: -1.0, minX: 500, maxX: 720, type: 'patrol' });
+
+        scrollPos.x = 420; scrollPos.y = 85;
+        playerStart.x = 60; playerStart.y = 710;
+    }
+
+    return { platforms, ladders, enemies, scrollPos, playerStart };
+}
+
+// --- PARTICLE SYSTEM ---
+const particles = [];
+function spawnParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x, y,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8 - 2,
+            life: 30 + Math.random() * 20,
+            maxLife: 50,
+            color,
+            size: 2 + Math.random() * 4
+        });
+    }
+}
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.15; p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+}
+function drawParticles() {
+    particles.forEach(p => {
+        const alpha = p.life / p.maxLife;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+    });
+    ctx.globalAlpha = 1;
+}
+
+// --- GAME STATE ---
+let gameState = 'title';
+let currentLevel = 0;
+let deaths = 0;
+let score = 0;
+let levelData = null;
+let player = null;
+let levelEnemies = [];
+let invincibleTimer = 0;
+let levelCompleteTimer = 0;
+let gameOverTimer = 0;
+let victoryTimer = 0;
+let introTimer = 0;
+let introPhase = 0;
+let sourcesCollected = [false, false, false, false];
+let scrollBob = 0;
+let bgStars = [];
+for (let i = 0; i < 80; i++) bgStars.push({ x: Math.random()*900, y: Math.random()*800, s: Math.random()*2+1, b: Math.random() });
+
+function initLevel(idx) {
+    levelData = buildLevel(idx);
+    player = {
+        x: levelData.playerStart.x,
+        y: levelData.playerStart.y,
+        vx: 0, vy: 0,
+        w: PLAYER_W, h: PLAYER_H,
+        onGround: false,
+        onLadder: false,
+        climbing: false,
+        facing: 'south',
+        wasOnGround: false
+    };
+    levelEnemies = levelData.enemies.map(e => ({...e, startX: e.x}));
+    invincibleTimer = 60;
+    particles.length = 0;
+}
+
+// --- COLLISION HELPERS ---
+function rectOverlap(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function isOnLadder(px, py, pw) {
+    const cx = px + pw/2;
+    for (const L of levelData.ladders) {
+        // Extend detection 20px above ladder top so player can climb onto the platform
+        if (cx > L.x && cx < L.x + 28 && py + PLAYER_H >= L.y - 20 && py < L.y + L.h) return true;
+    }
+    return false;
+}
+
+function isLadderBelow(px, py, pw) {
+    const cx = px + pw/2;
+    for (const L of levelData.ladders) {
+        if (cx > L.x && cx < L.x + 28 && py + PLAYER_H >= L.y - 5 && py + PLAYER_H <= L.y + 10) return true;
+    }
+    return false;
+}
+
+// --- UPDATE ---
+function update() {
+    scrollBob += 0.05;
+
+    if (gameState === 'title') {
+        if (keys['Space'] || keys['Enter']) {
+            ensureAudio();
+            bgMusic.play().catch(() => {});
+            gameState = 'intro';
+            introTimer = 0;
+            introPhase = 0;
+            currentLevel = 0;
+            deaths = 0;
+            score = 0;
+            sourcesCollected = [false, false, false, false];
+        }
+        return;
+    }
+
+    if (gameState === 'intro') {
+        introTimer++;
+        // Each phase animates in, then waits for key press to advance
+        const phaseDone = (introPhase === 0 && introTimer >= 80) ||
+                          (introPhase === 1 && introTimer >= 50) ||
+                          (introPhase === 2 && introTimer >= 100) ||
+                          (introPhase === 3 && introTimer >= 60);
+        if (phaseDone && (keys['Space'] || keys['Enter'])) {
+            keys['Space'] = false; keys['Enter'] = false;
+            introPhase++;
+            introTimer = 0;
+            if (introPhase > 3) {
+                gameState = 'playing';
+                initLevel(0);
+            }
+        }
+        return;
+    }
+
+    if (gameState === 'levelComplete') {
+        levelCompleteTimer--;
+        updateParticles();
+        if (levelCompleteTimer <= 0) {
+            currentLevel++;
+            if (currentLevel >= 4) {
+                gameState = 'victory';
+                victoryTimer = 300;
+                videoEnded = false;
+                jedpVideo.currentTime = 0;
+                jedpVideo.play().catch(() => {});
+                playSound('win');
+            } else {
+                gameState = 'playing';
+                initLevel(currentLevel);
+            }
+        }
+        return;
+    }
+
+    if (gameState === 'gameOver') {
+        gameOverTimer--;
+        if (gameOverTimer <= 0 && (keys['Space'] || keys['Enter'])) {
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+            gameState = 'title';
+        }
+        return;
+    }
+
+    if (gameState === 'victory') {
+        updateParticles();
+        if (victoryTimer > 0) victoryTimer--;
+        if (victoryTimer % 15 === 0 && victoryTimer > 100) {
+            spawnParticles(Math.random()*900, Math.random()*500, ['#FFD700','#87CEEB','#90EE90','#DDA0DD'][Math.floor(Math.random()*4)], 10);
+        }
+        // Only allow continue once both animation and video are done
+        const animDone = victoryTimer <= 0;
+        const vidDone = videoEnded || jedpVideo.paused;
+        if (animDone && vidDone && (keys['Space'] || keys['Enter'])) {
+            jedpVideo.pause();
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+            gameState = 'title';
+        }
+        return;
+    }
+
+    // --- PLAYING STATE ---
+    const P = player;
+
+    P.vx = 0;
+    if (keys['ArrowLeft'] || keys['KeyA']) { P.vx = -MOVE_SPEED; P.facing = 'west'; }
+    if (keys['ArrowRight'] || keys['KeyD']) { P.vx = MOVE_SPEED; P.facing = 'east'; }
+
+    const onLadder = isOnLadder(P.x, P.y, P.w);
+    const ladderBelow = isLadderBelow(P.x, P.y, P.w);
+
+    if (onLadder && (keys['ArrowUp'] || keys['KeyW'])) {
+        P.climbing = true;
+    }
+    if (ladderBelow && (keys['ArrowDown'] || keys['KeyS'])) {
+        P.climbing = true;
+        P.y += 5;
+    }
+
+    if (P.climbing) {
+        P.vy = 0;
+        if (keys['ArrowUp'] || keys['KeyW']) P.vy = -CLIMB_SPEED;
+        if (keys['ArrowDown'] || keys['KeyS']) P.vy = CLIMB_SPEED;
+        if (!isOnLadder(P.x, P.y, P.w)) P.climbing = false;
+        if ((keys['Space']) && P.onGround && !keys['ArrowDown'] && !keys['KeyS']) {
+            P.climbing = false;
+        }
+    }
+
+    if (!P.climbing) {
+        P.vy += GRAVITY;
+        if (P.vy > 12) P.vy = 12;
+    }
+
+    if ((keys['Space']) && P.onGround && !P.climbing) {
+        P.vy = JUMP_FORCE;
+        P.onGround = false;
+        playSound('jump');
+    }
+
+    P.x += P.vx;
+    for (const plat of levelData.platforms) {
+        if (rectOverlap({x: P.x, y: P.y, w: P.w, h: P.h}, plat)) {
+            if (P.vx > 0) P.x = plat.x - P.w;
+            if (P.vx < 0) P.x = plat.x + plat.w;
+        }
+    }
+
+    if (P.x < 0) P.x = 0;
+    if (P.x + P.w > 900) P.x = 900 - P.w;
+
+    P.wasOnGround = P.onGround;
+    P.y += P.vy;
+    P.onGround = false;
+
+    // Skip platform collision while climbing (lets player pass through platforms on ladders)
+    if (!P.climbing) {
+        for (const plat of levelData.platforms) {
+            if (rectOverlap({x: P.x, y: P.y, w: P.w, h: P.h}, plat)) {
+                if (P.vy > 0) {
+                    P.y = plat.y - P.h;
+                    if (!P.wasOnGround && P.vy > 3) playSound('land');
+                    P.vy = 0;
+                    P.onGround = true;
+                } else if (P.vy < 0) {
+                    P.y = plat.y + plat.h;
+                    P.vy = 0;
+                }
+            }
+        }
+    }
+
+    if (P.y > 820) { loseLife(); return; }
+
+    for (const e of levelEnemies) {
+        e.x += e.speed;
+        if (e.x <= e.minX || e.x + e.w >= e.maxX) e.speed *= -1;
+        // Shrink collision box (visual is larger than hitbox)
+        e.hitX = e.x + 5;
+        e.hitY = e.y + 4;
+        e.hitW = e.w - 10;
+        e.hitH = e.h - 4;
+    }
+
+    if (invincibleTimer > 0) {
+        invincibleTimer--;
+    } else {
+        for (const e of levelEnemies) {
+            const playerBox = {x: P.x+6, y: P.y+6, w: P.w-12, h: P.h-12};
+            const enemyBox = {x: e.hitX || e.x+5, y: e.hitY || e.y+4, w: e.hitW || e.w-10, h: e.hitH || e.h-4};
+            if (rectOverlap(playerBox, enemyBox)) {
+                // DK-style: if player's feet are above enemy top, it's a jump-over
+                if (P.y + P.h - 10 < e.y) {
+                    // Successful jump over! Award points and mark enemy as jumped
+                    if (!e.jumped) {
+                        e.jumped = true;
+                        score += 100;
+                        spawnParticles(P.x + P.w/2, P.y + P.h, '#FFD700', 5);
+                    }
+                } else {
+                    loseLife(); return;
+                }
+            } else {
+                // Reset jumped flag when player moves away
+                if (e.jumped) e.jumped = false;
+            }
+        }
+    }
+
+    const sc = levelData.scrollPos;
+    const scrollRect = { x: sc.x, y: sc.y + Math.sin(scrollBob)*6, w: 40, h: 50 };
+    if (rectOverlap({x: P.x, y: P.y, w: P.w, h: P.h}, scrollRect)) {
+        sourcesCollected[currentLevel] = true;
+        score += 2500;
+        playSound('levelComplete');
+        spawnParticles(sc.x + 20, sc.y + 25, SOURCES[currentLevel].color, 30);
+        gameState = 'levelComplete';
+        levelCompleteTimer = 150;
+    }
+
+    updateParticles();
+}
+
+function loseLife() {
+    deaths++;
+    playDeathClip();
+    spawnParticles(player.x + PLAYER_W/2, player.y + PLAYER_H/2, '#FF4444', 20);
+    player.x = levelData.playerStart.x;
+    player.y = levelData.playerStart.y;
+    player.vx = 0; player.vy = 0;
+    player.climbing = false;
+    invincibleTimer = 90;
+}
+
+// --- DRAW ---
+function draw() {
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 900, 800);
+
+    bgStars.forEach(s => {
+        s.b += 0.02;
+        ctx.globalAlpha = 0.3 + Math.sin(s.b) * 0.3;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(s.x, s.y, s.s, s.s);
+    });
+    ctx.globalAlpha = 1;
+
+    if (gameState === 'title') { drawTitle(); return; }
+    if (gameState === 'intro') { drawIntro(); return; }
+    if (gameState === 'gameOver') { drawGameOver(); return; }
+    if (gameState === 'victory') { drawVictory(); return; }
+
+    drawLevel();
+    drawEnemies();
+    drawScroll();
+    drawPlayer();
+    drawParticles();
+    drawHUD();
+
+    if (gameState === 'levelComplete') drawLevelComplete();
+}
+
+function drawTitle() {
+    const t = Date.now() / 1000;
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 48px monospace';
+    ctx.fillText('BIBLICAL DETECTIVE', 450, 200);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '20px monospace';
+    ctx.fillText('The Documentary Hypothesis', 450, 240);
+
+    if (spriteImages.south && spriteImages.south.complete) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(spriteImages.south, 414, 280, 72, 72);
+    }
+
+    SOURCES.forEach((s, i) => {
+        const bx = 130 + i * 170;
+        ctx.fillStyle = s.color;
+        ctx.font = 'bold 18px monospace';
+        ctx.fillText(s.key + ' Source', bx, 420);
+        ctx.fillStyle = '#888';
+        ctx.font = '11px monospace';
+        const words = s.desc.split(', ');
+        words.forEach((w, j) => {
+            ctx.fillText(w, bx, 440 + j * 15);
+        });
+    });
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '18px monospace';
+    if (Math.sin(t * 3) > 0) ctx.fillText('PRESS SPACE TO START', 450, 550);
+
+    ctx.fillStyle = '#888';
+    ctx.font = '14px monospace';
+    ctx.fillText('Arrow Keys / WASD to move | SPACE to jump', 450, 610);
+    ctx.fillText('Climb ladders to reach the Source Scrolls!', 450, 635);
+    ctx.textAlign = 'left';
+}
+
+function drawIntro() {
+    ctx.textAlign = 'center';
+    const t = introTimer;
+
+    if (introPhase === 0) {
+        // "Oh no! The Torah has been deconstructed!"
+        const alpha0 = Math.min(1, t / 30);
+        ctx.globalAlpha = alpha0;
+        ctx.fillStyle = '#FF4444';
+        ctx.font = 'bold 44px monospace';
+        const shake = Math.sin(t * 0.5) * 3;
+        ctx.fillText('Oh no!', 450 + shake, 280);
+
+        if (t > 30) {
+            const alpha1 = Math.min(1, (t - 30) / 40);
+            ctx.globalAlpha = alpha1;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '20px monospace';
+            ctx.fillText('The Torah \u2014 the first five books of', 450, 360);
+            ctx.fillText('the Bible \u2014 has been deconstructed!', 450, 390);
+        }
+
+        if (t >= 80) drawContinuePrompt();
+    }
+    else if (introPhase === 1) {
+        // "Biblical scholars have identified four original sources"
+        const alpha = Math.min(1, t / 40);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#FFD700';
+        ctx.font = '20px monospace';
+        ctx.fillText('Biblical scholars have identified', 450, 340);
+        ctx.fillText('four original sources:', 450, 375);
+
+        if (t >= 50) drawContinuePrompt();
+    }
+    else if (introPhase === 2) {
+        // Show the four sources one by one
+        SOURCES.forEach((s, i) => {
+            const delay = i * 20;
+            const elapsed = t - delay;
+            if (elapsed > 0) {
+                const alpha = Math.min(1, elapsed / 30);
+                const slide = Math.max(0, 20 - elapsed);
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = s.color;
+                ctx.font = 'bold 22px monospace';
+                const bx = 130 + i * 170;
+                ctx.fillText(s.key + ' Source', bx, 280 + slide);
+                ctx.fillStyle = '#888';
+                ctx.font = '11px monospace';
+                const words = s.desc.split(', ');
+                words.forEach((w, j) => {
+                    ctx.fillText(w, bx, 302 + j * 15 + slide);
+                });
+            }
+        });
+
+        if (t >= 100) drawContinuePrompt();
+    }
+    else if (introPhase === 3) {
+        // "You must find all four sources to reconstruct the Torah!"
+        const alpha = Math.min(1, t / 40);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 22px monospace';
+        ctx.fillText('You must find all four sources', 450, 300);
+        ctx.fillText('to reconstruct the Torah!', 450, 335);
+
+        if (t > 20 && spriteImages.south && spriteImages.south.complete) {
+            ctx.globalAlpha = Math.min(1, (t - 20) / 30);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(spriteImages.south, 414, 400, 72, 72);
+        }
+
+        if (t >= 60) {
+            ctx.globalAlpha = 1;
+            if (Math.sin(Date.now() / 300) > 0) {
+                ctx.fillStyle = '#888';
+                ctx.font = '14px monospace';
+                ctx.fillText('Press SPACE to begin', 450, 750);
+            }
+        }
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+}
+
+function drawContinuePrompt() {
+    if (Math.sin(Date.now() / 300) > 0) {
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#888';
+        ctx.font = '14px monospace';
+        ctx.fillText('Press SPACE to continue', 450, 750);
+    }
+}
+
+function drawLevel() {
+    const src = SOURCES[currentLevel];
+
+    for (const p of levelData.platforms) {
+        const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+        grad.addColorStop(0, '#8B6914');
+        grad.addColorStop(1, '#5C4A0E');
+        ctx.fillStyle = grad;
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+
+        ctx.fillStyle = '#A67C00';
+        ctx.fillRect(p.x, p.y, p.w, 3);
+
+        ctx.strokeStyle = '#4A3500';
+        ctx.lineWidth = 1;
+        for (let bx = p.x; bx < p.x + p.w; bx += 32) {
+            ctx.beginPath();
+            ctx.moveTo(bx, p.y); ctx.lineTo(bx, p.y + p.h);
+            ctx.stroke();
+        }
+    }
+
+    for (const L of levelData.ladders) {
+        const lw = 28;
+        ctx.fillStyle = '#6699CC';
+        ctx.fillRect(L.x, L.y, 4, L.h);
+        ctx.fillRect(L.x + lw - 4, L.y, 4, L.h);
+
+        ctx.fillStyle = '#88AADD';
+        for (let ry = L.y + 8; ry < L.y + L.h; ry += 18) {
+            ctx.fillRect(L.x + 2, ry, lw - 4, 3);
+        }
+    }
+
+    ctx.strokeStyle = src.color + '33';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2, 2, 896, 796);
+}
+
+function drawEnemies() {
+    const t = Date.now() / 200;
+    for (const e of levelEnemies) {
+        const segments = 5;
+        const segW = e.w / segments;
+        for (let i = 0; i < segments; i++) {
+            const sy = Math.sin(t + i * 0.8) * 3;
+            const segX = e.x + i * segW;
+            const segY = e.y + sy;
+
+            ctx.fillStyle = i === 0 ? '#FF3333' : (i % 2 === 0 ? '#CC2222' : '#AA1111');
+            ctx.beginPath();
+            ctx.arc(segX + segW/2, segY + 8, segW/2 + 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        const headX = e.speed > 0 ? e.x + e.w - segW : e.x;
+        const headSy = Math.sin(t) * 3;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(headX + segW/2 - 3, e.y + headSy + 5, 3, 0, Math.PI * 2);
+        ctx.arc(headX + segW/2 + 3, e.y + headSy + 5, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(headX + segW/2 - 3 + (e.speed > 0 ? 1 : -1), e.y + headSy + 5, 1.5, 0, Math.PI * 2);
+        ctx.arc(headX + segW/2 + 3 + (e.speed > 0 ? 1 : -1), e.y + headSy + 5, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function drawScroll() {
+    const sc = levelData.scrollPos;
+    const src = SOURCES[currentLevel];
+    const bob = Math.sin(scrollBob) * 6;
+    const sx = sc.x;
+    const sy = sc.y + bob;
+
+    ctx.globalAlpha = 0.3 + Math.sin(scrollBob * 2) * 0.15;
+    ctx.fillStyle = src.color;
+    ctx.beginPath();
+    ctx.arc(sx + 20, sy + 25, 35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#F5DEB3';
+    ctx.fillRect(sx + 5, sy + 8, 30, 34);
+
+    ctx.fillStyle = '#8B6914';
+    ctx.beginPath(); ctx.arc(sx + 8, sy + 8, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx + 32, sy + 8, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx + 8, sy + 42, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx + 32, sy + 42, 6, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = src.color;
+    ctx.font = 'bold 24px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(src.key, sx + 20, sy + 35);
+    ctx.textAlign = 'left';
+
+}
+
+function drawPlayer() {
+    const P = player;
+    if (invincibleTimer > 0 && Math.floor(invincibleTimer / 4) % 2 === 0) return;
+
+    const img = spriteImages[P.facing] || spriteImages.south;
+    if (img && img.complete) {
+        ctx.imageSmoothingEnabled = false;
+        const dx = Math.round(P.x - 6);
+        const dy = Math.round(P.y - 3);
+        ctx.drawImage(img, dx, dy, PLAYER_W + 12, PLAYER_H + 6);
+    } else {
+        ctx.fillStyle = '#FF8800';
+        ctx.fillRect(P.x, P.y, P.w, P.h);
+    }
+}
+
+function drawHUD() {
+    const src = SOURCES[currentLevel];
+
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0, 0, 900, 36);
+
+    ctx.fillStyle = src.color;
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('Level ' + (currentLevel + 1) + ': ' + src.name, 10, 24);
+
+    ctx.fillStyle = '#AAAAAA';
+    ctx.font = '16px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('Deaths: ' + deaths, 890, 24);
+
+    ctx.fillStyle = '#FFD700';
+    ctx.textAlign = 'center';
+    ctx.fillText('Score: ' + score, 450, 24);
+
+    ctx.textAlign = 'left';
+    for (let i = 0; i < 4; i++) {
+        const bx = 650 + i * 28;
+        ctx.fillStyle = sourcesCollected[i] ? SOURCES[i].color : '#333';
+        ctx.font = 'bold 14px monospace';
+        ctx.fillText(SOURCES[i].key, bx, 24);
+    }
+    ctx.textAlign = 'left';
+}
+
+function drawLevelComplete() {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, 900, 800);
+
+    const src = SOURCES[currentLevel];
+    ctx.textAlign = 'center';
+    ctx.fillStyle = src.color;
+    ctx.font = 'bold 36px monospace';
+    ctx.fillText(src.key + ' SOURCE FOUND!', 450, 340);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '18px monospace';
+    ctx.fillText(src.desc, 450, 390);
+
+    ctx.fillStyle = '#888';
+    ctx.font = '16px monospace';
+    if (currentLevel < 3) {
+        ctx.fillText('Next: ' + SOURCES[currentLevel + 1].name, 450, 440);
+    } else {
+        ctx.fillText('All sources collected!', 450, 440);
+    }
+    ctx.textAlign = 'left';
+}
+
+function drawGameOver() {
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 900, 800);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FF4444';
+    ctx.font = 'bold 48px monospace';
+    ctx.fillText('GAME OVER', 450, 320);
+
+    ctx.fillStyle = '#FFD700';
+    ctx.font = '24px monospace';
+    ctx.fillText('Score: ' + score, 450, 380);
+
+    ctx.fillStyle = '#888';
+    ctx.font = '14px monospace';
+    ctx.fillText('Sources found: ' + sourcesCollected.filter(Boolean).length + ' / 4', 450, 420);
+
+    if (gameOverTimer <= 0) {
+        if (Math.sin(Date.now() / 300) > 0) {
+            ctx.fillStyle = '#FFF';
+            ctx.font = '18px monospace';
+            ctx.fillText('PRESS SPACE TO CONTINUE', 450, 500);
+        }
+    }
+    ctx.textAlign = 'left';
+}
+
+function drawVictory() {
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 900, 800);
+    drawParticles();
+
+    const vt = 300 - victoryTimer;
+    ctx.textAlign = 'center';
+
+    // Title fades in
+    if (vt >= 20) {
+        const alpha = Math.min(1, (vt - 20) / 40);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 36px monospace';
+        ctx.fillText('TORAH RECONSTRUCTED!', 450, 60);
+    }
+
+    // JEDP video plays in center
+    if (vt >= 10 && jedpVideo.readyState >= 2) {
+        const alpha = Math.min(1, (vt - 10) / 30);
+        ctx.globalAlpha = alpha;
+        const vw = jedpVideo.videoWidth || 640;
+        const vh = jedpVideo.videoHeight || 360;
+        const maxW = 520, maxH = 380;
+        const scale = Math.min(maxW / vw, maxH / vh);
+        const dw = vw * scale;
+        const dh = vh * scale;
+        const dx = (900 - dw) / 2;
+        const dy = 90;
+        // Border glow
+        ctx.strokeStyle = '#FFD70044';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(dx - 4, dy - 4, dw + 8, dh + 8);
+        ctx.drawImage(jedpVideo, dx, dy, dw, dh);
+    }
+
+    // Story text below video
+    if (vt >= 80) {
+        const alpha = Math.min(1, (vt - 80) / 40);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '18px monospace';
+        ctx.fillText('The Biblical Detective has uncovered', 450, 510);
+        ctx.fillText('all four sources of the Documentary Hypothesis!', 450, 538);
+    }
+
+    // Sources + cat
+    if (vt >= 130) {
+        SOURCES.forEach((s, i) => {
+            const delay = i * 12;
+            const elapsed = vt - 130 - delay;
+            if (elapsed > 0) {
+                ctx.globalAlpha = Math.min(1, elapsed / 25);
+                const bx = 115 + i * 185;
+                ctx.fillStyle = s.color;
+                ctx.font = 'bold 22px monospace';
+                ctx.fillText(s.key, bx, 595);
+                ctx.font = '11px monospace';
+                ctx.fillText(s.name, bx, 615);
+            }
+        });
+
+        const catAlpha = Math.min(1, (vt - 170) / 30);
+        if (catAlpha > 0 && spriteImages.south && spriteImages.south.complete) {
+            ctx.globalAlpha = catAlpha;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(spriteImages.south, 414, 638, 72, 72);
+        }
+    }
+
+    // Score + deaths
+    if (vt >= 200) {
+        const alpha = Math.min(1, (vt - 200) / 30);
+        ctx.globalAlpha = alpha;
+
+        ctx.fillStyle = '#FFD700';
+        ctx.font = '22px monospace';
+        ctx.fillText('Final Score: ' + score, 450, 740);
+
+        ctx.fillStyle = '#AAAAAA';
+        ctx.font = '14px monospace';
+        ctx.fillText('Deaths: ' + deaths, 450, 765);
+    }
+
+    // Continue prompt — only when animation done AND video done
+    const animDone = victoryTimer <= 0;
+    const vidDone = videoEnded || jedpVideo.paused;
+    if (animDone && vidDone) {
+        if (Math.sin(Date.now() / 300) > 0) {
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#FFF';
+            ctx.font = '18px monospace';
+            ctx.fillText('PRESS SPACE TO PLAY AGAIN', 450, 790);
+        }
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+}
+
+// --- GAME LOOP ---
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
