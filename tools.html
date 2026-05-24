@@ -99,12 +99,24 @@
     .layers-image-wrap img {
       display: block;
       width: 100%;
-      clip-path: inset(0 0 0 100%);
+      /* Hidden: collapsed to the far right */
+      clip-path: polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%);
       transition: clip-path 0.9s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .layers-image-wrap img.state-1 { clip-path: inset(0 0 0 66%); }
-    .layers-image-wrap img.state-2 { clip-path: inset(0 0 0 33%); }
-    .layers-image-wrap img.state-3 { clip-path: inset(0 0 0 0%); }
+    /* Layer 1 — rightmost section, cut along right red diagonal line
+       Right red line: ~82% from left at top, ~71% from left at bottom */
+    .layers-image-wrap img.state-1 {
+      clip-path: polygon(82% 0%, 100% 0%, 100% 100%, 71% 100%);
+    }
+    /* Layer 2 — right two sections, cut along left red diagonal line
+       Left red line: ~35% from left at top, ~24% from left at bottom */
+    .layers-image-wrap img.state-2 {
+      clip-path: polygon(35% 0%, 100% 0%, 100% 100%, 24% 100%);
+    }
+    /* Layer 3 — full image */
+    .layers-image-wrap img.state-3 {
+      clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+    }
 
     .layers-descriptions {
       margin-top: 1.25rem;
