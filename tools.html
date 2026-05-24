@@ -99,12 +99,13 @@
     .layers-image-wrap img {
       display: block;
       width: 100%;
-      clip-path: inset(0 100% 0 0);
+      clip-path: inset(0 0 0 100%);
       transition: clip-path 0.9s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .layers-image-wrap img.state-1 { clip-path: inset(0 66% 0 0); }
-    .layers-image-wrap img.state-2 { clip-path: inset(0 33% 0 0); }
-    .layers-image-wrap img.state-3 { clip-path: inset(0 0% 0 0); }
+    /* Reveal from right: layer 1 is rightmost, layer 3 is leftmost */
+    .layers-image-wrap img.state-1 { clip-path: inset(0 0 0 66%); }
+    .layers-image-wrap img.state-2 { clip-path: inset(0 0 0 33%); }
+    .layers-image-wrap img.state-3 { clip-path: inset(0 0 0 0%); }
 
     .layers-descriptions {
       margin-top: 1.25rem;
@@ -152,10 +153,7 @@
       transition: background 0.3s;
     }
     .layers-btn:hover { background: #c92e58; }
-    .layers-btn:disabled {
-      background: #ccc;
-      cursor: default;
-    }
+    .layers-btn:disabled { background: #ccc; cursor: default; }
     .layers-reset {
       background: none;
       border: none;
