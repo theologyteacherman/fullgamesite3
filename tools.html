@@ -135,11 +135,19 @@
           </div>
         </div>
       </div>
-      <!-- Source Criticism -->
-      <div class="card">
-        <div class="card-content">
-          <h3>Source Criticism</h3>
-          <p>The literary tool of understanding writing in the context of the original and independent sources that went into the composite text as we see it today, as a means of &quot;getting at&quot; the intended meaning of the text.</p>
+      <!-- Source Criticism (flip card) -->
+      <div class="card flip-card" id="source-flip">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <div class="card-content">
+              <h3>Source Criticism</h3>
+              <p>The literary tool of understanding writing in the context of the original and independent sources that went into the composite text as we see it today, as a means of &quot;getting at&quot; the intended meaning of the text.</p>
+            </div>
+            <div class="flip-hint">click to flip ↺</div>
+          </div>
+          <div class="flip-card-back">
+            <img src="images/Source%20Criticism%20.jpg" alt="Source Criticism diagram">
+          </div>
         </div>
       </div>
       <!-- Theological Allegorical Criticism -->
@@ -162,6 +170,9 @@
       this.classList.toggle('flipped');
     });
     document.getElementById('genre-flip').addEventListener('click', function () {
+      this.classList.toggle('flipped');
+    });
+    document.getElementById('source-flip').addEventListener('click', function () {
       this.classList.toggle('flipped');
     });
   </script>
