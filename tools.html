@@ -24,6 +24,63 @@
   <link rel="stylesheet" href="style.css">
   <!-- Favicon for all pages -->
   <link rel="icon" type="image/png" href="images/favicon.png">
+
+  <style>
+    .flip-card {
+      perspective: 1000px;
+      overflow: visible !important;
+      transform: none !important;
+      cursor: pointer;
+      min-height: 240px;
+    }
+    .flip-card:hover {
+      transform: none !important;
+    }
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      min-height: 240px;
+      transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    .flip-card.flipped .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-card-front,
+    .flip-card-back {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    .flip-card-front {
+      display: flex;
+      flex-direction: column;
+    }
+    .flip-card-back {
+      transform: rotateY(180deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
+    }
+    .flip-card-back img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+    .flip-hint {
+      font-size: 0.75rem;
+      color: #aaa;
+      text-align: right;
+      padding: 0.25rem 1rem 0.5rem;
+    }
+  </style>
 </head>
 <body>
   <!-- Navigation -->
@@ -48,11 +105,19 @@
       "Since God speaks in Sacred Scripture through men in human fashion, the interpreter of Sacred Scripture, in order to see clearly what God wanted to communicate to us, should carefully investigate what meaning the sacred writers really intended, and what God wanted to manifest by means of their words."<br>&mdash; <cite>Dei&nbsp;Verbum, §12</cite>
     </blockquote>
     <div class="card-grid">
-      <!-- Historical Criticism -->
-      <div class="card">
-        <div class="card-content">
-          <h3>Historical Criticism</h3>
-          <p>The literary tool of understanding writing in the historical, cultural, and biographical context of the author, as a means of &quot;getting at&quot; the intended meaning of their text.</p>
+      <!-- Historical Criticism (flip card) -->
+      <div class="card flip-card" id="historical-flip">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <div class="card-content">
+              <h3>Historical Criticism</h3>
+              <p>The literary tool of understanding writing in the historical, cultural, and biographical context of the author, as a means of &quot;getting at&quot; the intended meaning of their text.</p>
+            </div>
+            <div class="flip-hint">click to flip ↺</div>
+          </div>
+          <div class="flip-card-back">
+            <img src="images/historical-criticism-slide.png" alt="Historical Criticism diagram">
+          </div>
         </div>
       </div>
       <!-- Genre Criticism -->
@@ -84,5 +149,10 @@
 
   <!-- Load global script for random click sounds -->
   <script src="script.js"></script>
+  <script>
+    document.getElementById('historical-flip').addEventListener('click', function () {
+      this.classList.toggle('flipped');
+    });
+  </script>
 </body>
 </html>
