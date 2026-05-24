@@ -88,6 +88,8 @@
       margin-bottom: 1.5rem;
       font-size: 1rem;
     }
+
+    /* Image + purple overlay container */
     .layers-image-wrap {
       position: relative;
       width: 100%;
@@ -112,6 +114,24 @@
       clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
     }
 
+    /* Purple overlay covers the supernatural (left) section of the image,
+       clipped to the same diagonal as the left red line */
+    .layers-purple-overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(180, 120, 255, 0.18);
+      clip-path: polygon(0% 0%, 35% 0%, 24% 100%, 0% 100%);
+      opacity: 0;
+      transition: opacity 0.8s ease 0.3s; /* slight delay so it fades in after the image */
+      pointer-events: none;
+      border-radius: 8px;
+    }
+    .layers-purple-overlay.visible {
+      opacity: 1;
+    }
+
+    /* Description cards */
     .layers-descriptions {
       margin-top: 1.25rem;
       display: flex;
@@ -128,11 +148,14 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
       opacity: 0;
       transform: translateY(8px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      transition: opacity 0.5s ease, transform 0.5s ease, background 0.5s ease;
     }
     .layer-desc.visible {
       opacity: 1;
       transform: translateY(0);
+    }
+    #layer-desc-3.visible {
+      background: #f0e6ff;
     }
     .layer-num {
       font-size: 1.4rem;
@@ -143,6 +166,26 @@
     }
     .layer-desc h4 { margin: 0 0 0.2rem; font-size: 1rem; }
     .layer-desc p  { margin: 0; font-size: 0.92rem; color: #555; }
+
+    /* Natural / Supernatural tags */
+    .layer-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      margin-bottom: 0.3rem;
+    }
+    .tag-natural {
+      background: #e8e8e8;
+      color: #666;
+    }
+    .tag-supernatural {
+      background: #d4aaff;
+      color: #4a006e;
+    }
 
     .layers-btn-wrap { text-align: center; margin-top: 1.5rem; }
     .layers-btn {
@@ -263,12 +306,14 @@
 
       <div class="layers-image-wrap">
         <img src="images/three-layers.jpg" id="layers-img" alt="The three layers of Sacred Scripture">
+        <div class="layers-purple-overlay" id="layers-overlay"></div>
       </div>
 
       <div class="layers-descriptions">
         <div class="layer-desc" id="layer-desc-1">
           <div class="layer-num">1</div>
           <div>
+            <span class="layer-tag tag-natural">Natural</span>
             <h4>The text itself</h4>
             <p>The words on the page as written — the surface starting point for all interpretation.</p>
           </div>
@@ -276,6 +321,7 @@
         <div class="layer-desc" id="layer-desc-2">
           <div class="layer-num">2</div>
           <div>
+            <span class="layer-tag tag-natural">Natural</span>
             <h4>The human author's intended meaning</h4>
             <p>What the human biblical writer sought to communicate to their original audience through their words — the meaning behind the surface of the text, uncovered through historical, genre, and source criticism.</p>
           </div>
@@ -283,6 +329,7 @@
         <div class="layer-desc" id="layer-desc-3">
           <div class="layer-num">3</div>
           <div>
+            <span class="layer-tag tag-supernatural">Supernatural</span>
             <h4>The Holy Spirit's intended meaning</h4>
             <p>The deeper divine meaning intended by God, behind even the human author's intended meaning — uncovered through theological and allegorical criticism, in light of the full witness of Scripture and Sacred Tradition.</p>
           </div>
@@ -319,6 +366,7 @@
     // ── Three Layers ──
     var layerState = 0;
     var img        = document.getElementById('layers-img');
+    var overlay    = document.getElementById('layers-overlay');
     var btn        = document.getElementById('layers-btn');
     var resetBtn   = document.getElementById('layers-reset');
     var stateClasses = ['state-1', 'state-2', 'state-3'];
@@ -328,6 +376,8 @@
       if (layerState >= 3) return;
       img.classList.add(stateClasses[layerState]);
       document.getElementById('layer-desc-' + (layerState + 1)).classList.add('visible');
+      // Fade in purple overlay when layer 3 is revealed
+      if (layerState === 2) overlay.classList.add('visible');
       layerState++;
       if (layerState < 3) {
         btn.textContent = btnLabels[layerState];
@@ -341,6 +391,7 @@
     resetBtn.addEventListener('click', function() {
       layerState = 0;
       stateClasses.forEach(function(c) { img.classList.remove(c); });
+      overlay.classList.remove('visible');
       for (var i = 1; i <= 3; i++) {
         document.getElementById('layer-desc-' + i).classList.remove('visible');
       }
