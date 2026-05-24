@@ -120,11 +120,19 @@
           </div>
         </div>
       </div>
-      <!-- Genre Criticism -->
-      <div class="card">
-        <div class="card-content">
-          <h3>Genre Criticism</h3>
-          <p>The literary tool of understanding writing in the context of the literary genre and conventions in which an author composed a text, as a means of &quot;getting at&quot; the intended meaning of their text.</p>
+      <!-- Genre Criticism (flip card) -->
+      <div class="card flip-card" id="genre-flip">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <div class="card-content">
+              <h3>Genre Criticism</h3>
+              <p>The literary tool of understanding writing in the context of the literary genre and conventions in which an author composed a text, as a means of &quot;getting at&quot; the intended meaning of their text.</p>
+            </div>
+            <div class="flip-hint">click to flip ↺</div>
+          </div>
+          <div class="flip-card-back">
+            <img src="images/Genre%20Criticism%20.jpg" alt="Genre Criticism diagram">
+          </div>
         </div>
       </div>
       <!-- Source Criticism -->
@@ -151,6 +159,9 @@
   <script src="script.js"></script>
   <script>
     document.getElementById('historical-flip').addEventListener('click', function () {
+      this.classList.toggle('flipped');
+    });
+    document.getElementById('genre-flip').addEventListener('click', function () {
       this.classList.toggle('flipped');
     });
   </script>
